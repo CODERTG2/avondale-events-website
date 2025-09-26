@@ -30,6 +30,11 @@ export default function Sidebar({
                         </Link>
                     </li>
                     <li>
+                        <Link href="https://us8.campaign-archive.com/home/?u=33e0baf6c82d89d58ee3edc46&id=708eb4487d">
+                            <p>Newsletter</p>
+                        </Link>
+                    </li>
+                    <li>
                         <Link href="https://www.instagram.com/avondale_events/?hl=en">
                             <p>Follow on Instagram</p>
                         </Link>
