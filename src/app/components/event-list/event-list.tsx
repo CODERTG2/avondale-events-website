@@ -29,7 +29,7 @@ function EventListDay({ daySchedule }: { daySchedule: DaySchedule }) {
       <div className="pb-16">
         <ul className="text-sm list-none">
           {daySchedule.events.map((event: Event, index: any) => (
-            <li key={index} className="flex items-start mb-6">
+            <li key={index} className="flex items-start mb-6 min-w-0">
               <EventDisplay event={event} />
             </li>
           ))}
@@ -48,10 +48,12 @@ function EventDisplay({ event }: { event: Event }) {
       <p className="w-1/3 font-semibold pr-6 text-right">
         {timeDisplay}
       </p>
-      <div className="w-2/3">
+      <div className="w-2/3 min-w-0 max-w-full">
         <p>{event.name}</p>
         <div className="flex items-center text-xs mt-1 text-gray-600">
-          <p>{event.organizer?.name ? event.organizer.name : ""}</p>
+          <p className="break-words whitespace-normal break-all whitespace-normal max-w-full">
+            {event.organizer?.name ? event.organizer.name : ""}
+          </p>
           {event.url && (
             <span className="ml-2 text-gray-600 flex items-center">
               <LinkIcon />

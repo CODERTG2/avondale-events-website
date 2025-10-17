@@ -12,7 +12,7 @@ const notoSans = Noto_Sans({
 
 export const metadata: Metadata = {
   title: "Avondale Events",
-  description: "Find local events in Avondale, Chicago.",
+  description: "Find things to do in Avondale, Chicago: events, shows, workshops, community meetings, and more.",
   manifest: '/manifest.webmanifest',
 };
 
