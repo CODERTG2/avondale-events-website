@@ -7,7 +7,7 @@ export default function Home() {
   const [events, setEvents] = useState([]);
   useEffect(() => {
     const fetchData = async () => {
-      const res = await fetch('/events.json');
+      const res = await fetch('https://events.avondalechicago.org/events.json');
       const data = await res.json();
       setEvents(data);
     };
