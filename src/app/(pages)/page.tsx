@@ -8,10 +8,13 @@ export default async function Home() {
     if (uri) {
       const client = new MongoClient(uri);
       await client.connect();
-      const db = client.db('events');
+      const db = client.db();
       const docs = await db.collection('events').find({}).toArray();
+      console.log(`Successfully fetched ${docs.length} events from MongoDB`);
       events = JSON.parse(JSON.stringify(docs));
       await client.close();
+    } else {
+      console.error("MONGODB_URI is not defined.");
     }
   } catch (error) {
     console.error("Failed to fetch events from MongoDB:", error);
