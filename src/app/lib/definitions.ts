@@ -7,6 +7,7 @@ export type Event = {
         name: string,
     },
     url?: string,
+    liked?: boolean,
 };
 
 export type Organization = {
