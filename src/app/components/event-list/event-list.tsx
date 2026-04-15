@@ -69,7 +69,8 @@ function EventDisplay({ event }: { event: Event }) {
       if (response.ok) {
         setIsLiked(true);
       } else {
-        alert("Failed to like event");
+        const data = await response.json();
+        alert(data.error || "Failed to like event");
       }
     } catch (error) {
       console.error("Error liking event:", error);
@@ -118,11 +119,11 @@ function EventDisplay({ event }: { event: Event }) {
               <span className="ml-1 break-words">{locationLabel}</span>
             </Link>
           )}
-          {session && (
+          {event.url && (
             <button
               onClick={handleLike}
-              disabled={isLoading || isLiked}
-              className={`ml-2 mt-1 inline-flex items-center ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+              disabled={isLoading || isLiked || !session}
+              className={`ml-2 mt-1 inline-flex items-center ${isLiked ? 'text-red-500' : session ? 'text-gray-400 hover:text-red-500' : 'text-gray-300 cursor-not-allowed'}`}
             >
               <HeartIcon filled={isLiked} />
               <span className="ml-1">{isLiked ? 'Liked' : 'Like'}</span>
