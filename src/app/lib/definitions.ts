@@ -3,6 +3,7 @@ export type Event = {
     name: string,
     startDate: ISODate | ISODatetime,
     endDate?: ISODate | ISODatetime,
+    venue?: string,
     organizer?: {
         name: string,
     },
