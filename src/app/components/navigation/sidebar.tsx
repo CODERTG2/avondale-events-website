@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PwaInstallButton from "../pwa-install-button";
+import { useSession, signOut } from "next-auth/react";
 
 export default function Sidebar({
     isOpen,
@@ -8,6 +9,8 @@ export default function Sidebar({
     isOpen: boolean;
     toggle: () => void;
 }) {
+    const { data: session } = useSession();
+
     return (
         <>
             <div
@@ -20,7 +23,7 @@ export default function Sidebar({
                 <ul className="text-center text-black leading-relaxed text-xl flex flex-col gap-y-8">
 
                     <li>
-                        <Link href="/">
+                        <Link href="/" onClick={toggle}>
                             <p>Events</p>
                         </Link>
                     </li>
@@ -41,6 +44,23 @@ export default function Sidebar({
                     </li>
                     <li>
                         <PwaInstallButton />
+                    </li>
+                    <li className="border-t border-gray-200 pt-6">
+                        {session ? (
+                            <button
+                                onClick={() => {
+                                    signOut({ callbackUrl: "/" });
+                                    toggle();
+                                }}
+                                className="text-gray-600 hover:text-black transition cursor-pointer"
+                            >
+                                Log Out
+                            </button>
+                        ) : (
+                            <Link href="/login" onClick={toggle}>
+                                <p className="text-gray-600 hover:text-black transition">Log In</p>
+                            </Link>
+                        )}
                     </li>
                 </ul>
             </div>
