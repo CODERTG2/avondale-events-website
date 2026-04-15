@@ -1,4 +1,4 @@
-import { eventSort, formatDay, isISODate } from "@/app/lib/time";
+import { eventSort, formatDay, isISODate, toChicago } from "@/app/lib/time";
 import { Event } from "@/app/lib/definitions";
 
 export type DaySchedule = {
@@ -39,23 +39,23 @@ export function generateEventSchedule(events: Event[]): DaySchedule[] {
 
 export function removePastEvents(events: Event[]): Event[] {
 
-  const now = new Date();
-  const today = new Date();
+  const now = toChicago(new Date());
+  const today = toChicago(new Date());
   today.setHours(0, 0, 0, 0); // today at 00:00
 
   return events.filter((event: Event) => {
     const isAllDay = isISODate(event.startDate);
     if (isAllDay) {
       // keep if today or later
-      return new Date(`${event.startDate}T00:00`) >= today;
+      return new Date(`${event.startDate}T00:00:00`) >= today;
     }
     else if (event.endDate) {
       //keep if end time has not passed
-      return new Date(event.endDate) > now;
+      return toChicago(new Date(event.endDate)) > now;
     }
     else {
       // assume event runs for two hours
-      let estimatedEnd = new Date(event.startDate);
+      let estimatedEnd = toChicago(new Date(event.startDate));
       estimatedEnd.setHours(estimatedEnd.getHours() + 2);
       // keep if event start within the past two hours
       return estimatedEnd > now;
