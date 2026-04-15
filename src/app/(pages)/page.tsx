@@ -1,6 +1,8 @@
 import EventList from "../components/event-list/event-list";
 import { MongoClient } from 'mongodb';
 
+export const revalidate = 86400; // Trigger background revalidation on Vercel every 24 hours (86400 seconds)
+
 export default async function Home() {
   let events = [];
   try {

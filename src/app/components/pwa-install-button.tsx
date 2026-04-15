@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-export default function PwaInstallButton(){
+export default function PwaInstallButton() {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [isIos, setIsIos] = useState(false);
     const [isInStandaloneMode, setIsInStandaloneMode] = useState<boolean | null>(null);
