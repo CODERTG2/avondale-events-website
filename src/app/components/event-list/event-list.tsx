@@ -1,7 +1,11 @@
+"use client";
+
 import { Event } from "@/app/lib/definitions";
 import { formatTimeRange } from "@/app/lib/time";
 import { removePastEvents, generateEventSchedule, DaySchedule } from "../../lib/eventDisplay";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
 
 export default function EventList({ events }: { events: Event[] }) {
 
@@ -42,6 +46,39 @@ function EventListDay({ daySchedule }: { daySchedule: DaySchedule }) {
 
 
 function EventDisplay({ event }: { event: Event }) {
+  const { data: session } = useSession();
+  const [isLiked, setIsLiked] = useState(false); // For now, assume not liked
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLike = async () => {
+    if (!session) {
+      alert("Please log in to like events");
+      return;
+    }
+    if (!event.url) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/likes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ eventId: event.url }),
+      });
+      if (response.ok) {
+        setIsLiked(true);
+      } else {
+        alert("Failed to like event");
+      }
+    } catch (error) {
+      console.error("Error liking event:", error);
+      alert("Error liking event");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   let timeDisplay = formatTimeRange(event);
   const locationLabel = event.venue || event.organizer?.name || "";
   const mapUrl = locationLabel
@@ -81,6 +118,16 @@ function EventDisplay({ event }: { event: Event }) {
               <span className="ml-1 break-words">{locationLabel}</span>
             </Link>
           )}
+          {session && (
+            <button
+              onClick={handleLike}
+              disabled={isLoading || isLiked}
+              className={`ml-2 mt-1 inline-flex items-center ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+            >
+              <HeartIcon filled={isLiked} />
+              <span className="ml-1">{isLiked ? 'Liked' : 'Like'}</span>
+            </button>
+          )}
         </div>
       </div>
     </>
@@ -115,6 +162,25 @@ function MapPinIcon() {
         fillRule="evenodd"
         d="M11.54 22.351a.75.75 0 0 0 .92 0c1.622-1.288 6.79-5.874 6.79-11.101a7.25 7.25 0 1 0-14.5 0c0 5.227 5.168 9.813 6.79 11.1ZM12 14.25a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
         clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={filled ? 0 : 2}
+      className="size-3 inline-block"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
       />
     </svg>
   );
