@@ -43,33 +43,47 @@ function EventListDay({ daySchedule }: { daySchedule: DaySchedule }) {
 
 function EventDisplay({ event }: { event: Event }) {
   let timeDisplay = formatTimeRange(event);
-  const content = (
+  const locationLabel = event.venue || event.organizer?.name || "";
+  const mapUrl = locationLabel
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationLabel)}`
+    : undefined;
+
+  return (
     <>
       <p className="w-1/3 font-semibold pr-6 text-right">
         {timeDisplay}
       </p>
       <div className="w-2/3 min-w-0 max-w-full">
-        <p>{event.name}</p>
-        <div className="flex items-center text-xs mt-1 text-gray-600">
-          <p className="break-words whitespace-normal break-all whitespace-normal max-w-full">
-            {event.organizer?.name ? event.organizer.name : ""}
-          </p>
-          {event.url && (
+        {event.url ? (
+          <Link href={event.url} className="inline-flex items-center hover:underline">
+            <span>{event.name}</span>
             <span className="ml-2 text-gray-600 flex items-center">
               <LinkIcon />
             </span>
+          </Link>
+        ) : (
+          <p>{event.name}</p>
+        )}
+        <div className="text-xs mt-1 text-gray-600">
+          {event.organizer?.name && (
+            <p className="break-words whitespace-normal break-all max-w-full">
+              {event.organizer.name}
+            </p>
+          )}
+          {mapUrl && (
+            <Link
+              href={mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center mt-1 hover:underline"
+            >
+              <MapPinIcon />
+              <span className="ml-1 break-words">{locationLabel}</span>
+            </Link>
           )}
         </div>
       </div>
     </>
-  );
-
-  return event.url ? (
-    <Link href={event.url} className="flex items-start w-full">
-      {content}
-    </Link>
-  ) : (
-    content
   );
 };
 
@@ -85,6 +99,23 @@ function LinkIcon() {
     >
       <path fillRule="evenodd" d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17h-8.5A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Z" clipRule="evenodd" />
       <path fillRule="evenodd" d="M6.194 12.753a.75.75 0 0 0 1.06.053L16.5 4.44v2.81a.75.75 0 0 0 1.5 0v-4.5a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0 0 1.5h2.553l-9.056 8.194a.75.75 0 0 0-.053 1.06Z" clipRule="evenodd" />
+    </svg>
+  );
+}
+
+function MapPinIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="size-3 inline-block"
+    >
+      <path
+        fillRule="evenodd"
+        d="M11.54 22.351a.75.75 0 0 0 .92 0c1.622-1.288 6.79-5.874 6.79-11.101a7.25 7.25 0 1 0-14.5 0c0 5.227 5.168 9.813 6.79 11.1ZM12 14.25a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+        clipRule="evenodd"
+      />
     </svg>
   );
 }
