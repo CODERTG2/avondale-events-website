@@ -3,6 +3,45 @@ import { auth } from "@/app/lib/auth/auth";
 import { getDb } from "@/app/lib/auth/mongodb";
 import { Like } from "@/app/lib/definitions";
 
+export async function GET() {
+  try {
+    const db = await getDb();
+    
+    // Get total like counts for all events
+    const likeCounts = await db.collection("likes").aggregate([
+      {
+        $group: {
+          _id: "$eventId",
+          count: { $sum: 1 }
+        }
+      }
+    ]).toArray();
+    
+    // Convert to a map of eventId -> count
+    const likeCountMap: { [eventId: string]: number } = {};
+    likeCounts.forEach((item: any) => {
+      likeCountMap[item._id] = item.count;
+    });
+
+    const session = await auth();
+    let likedEventIds: string[] = [];
+    
+    if (session?.user?.id) {
+      // Get user's liked events
+      const likes = await db.collection("likes").find({ userId: session.user.id }).toArray();
+      likedEventIds = likes.map((like) => (like as unknown as Like).eventId);
+    }
+
+    return NextResponse.json({ 
+      likedEventIds,
+      likeCounts: likeCountMap
+    });
+  } catch (error) {
+    console.error("Error fetching likes:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();

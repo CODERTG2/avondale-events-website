@@ -5,9 +5,33 @@ import { formatTimeRange } from "@/app/lib/time";
 import { removePastEvents, generateEventSchedule, DaySchedule } from "../../lib/eventDisplay";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function EventList({ events }: { events: Event[] }) {
+  const { data: session } = useSession();
+  const [likedEventIds, setLikedEventIds] = useState<string[]>([]);
+  const [likeCounts, setLikeCounts] = useState<{ [eventId: string]: number }>({});
+  const [loadingLikes, setLoadingLikes] = useState(false);
+
+  useEffect(() => {
+    fetchLikes();
+  }, [session]);
+
+  const fetchLikes = async () => {
+    setLoadingLikes(true);
+    try {
+      const response = await fetch("/api/likes");
+      if (response.ok) {
+        const data = await response.json();
+        setLikedEventIds(data.likedEventIds || []);
+        setLikeCounts(data.likeCounts || {});
+      }
+    } catch (error) {
+      console.error("Error fetching likes:", error);
+    } finally {
+      setLoadingLikes(false);
+    }
+  };
 
   let upcomingEvents = removePastEvents(events);
   let eventSchedule = generateEventSchedule(upcomingEvents);
@@ -16,14 +40,25 @@ export default function EventList({ events }: { events: Event[] }) {
     <>
       <div className="">
         {eventSchedule.map((daySchedule: DaySchedule) => (
-          <EventListDay daySchedule={daySchedule} key={daySchedule.dayDisplay} />
+          <EventListDay 
+            daySchedule={daySchedule} 
+            likedEventIds={likedEventIds}
+            likeCounts={likeCounts}
+            onLikeUpdate={fetchLikes}
+            key={daySchedule.dayDisplay} 
+          />
         ))}
       </div>
     </>
   );
 }
 
-function EventListDay({ daySchedule }: { daySchedule: DaySchedule }) {
+function EventListDay({ daySchedule, likedEventIds, likeCounts, onLikeUpdate }: { 
+  daySchedule: DaySchedule; 
+  likedEventIds: string[];
+  likeCounts: { [eventId: string]: number };
+  onLikeUpdate: () => void;
+}) {
 
   return (
     <>
@@ -34,7 +69,12 @@ function EventListDay({ daySchedule }: { daySchedule: DaySchedule }) {
         <ul className="text-sm list-none">
           {daySchedule.events.map((event: Event, index: any) => (
             <li key={index} className="flex items-start mb-6 min-w-0">
-              <EventDisplay event={event} />
+              <EventDisplay 
+                event={event} 
+                isLiked={likedEventIds.includes(event.url || '')}
+                likeCount={likeCounts[event.url || ''] || 0}
+                onLikeUpdate={onLikeUpdate}
+              />
             </li>
           ))}
         </ul>
@@ -45,9 +85,13 @@ function EventListDay({ daySchedule }: { daySchedule: DaySchedule }) {
 
 
 
-function EventDisplay({ event }: { event: Event }) {
+function EventDisplay({ event, isLiked, likeCount, onLikeUpdate }: { 
+  event: Event; 
+  isLiked: boolean;
+  likeCount: number;
+  onLikeUpdate: () => void;
+}) {
   const { data: session } = useSession();
-  const [isLiked, setIsLiked] = useState(false); // For now, assume not liked
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLike = async () => {
@@ -67,7 +111,7 @@ function EventDisplay({ event }: { event: Event }) {
         body: JSON.stringify({ eventId: event.url }),
       });
       if (response.ok) {
-        setIsLiked(true);
+        onLikeUpdate(); // Refresh likes after successful like
       } else {
         const data = await response.json();
         alert(data.error || "Failed to like event");
@@ -126,7 +170,7 @@ function EventDisplay({ event }: { event: Event }) {
               className={`ml-2 mt-1 inline-flex items-center ${isLiked ? 'text-red-500' : session ? 'text-gray-400 hover:text-red-500' : 'text-gray-300 cursor-not-allowed'}`}
             >
               <HeartIcon filled={isLiked} />
-              <span className="ml-1">{isLiked ? 'Liked' : 'Like'}</span>
+              <span className="ml-1">{likeCount > 0 ? likeCount : ''}</span>
             </button>
           )}
         </div>
