@@ -75,3 +75,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { eventId }: { eventId: string } = await request.json();
+    if (!eventId) {
+      return NextResponse.json({ error: "Event ID is required" }, { status: 400 });
+    }
+
+    const db = await getDb();
+    const result = await db.collection("likes").deleteOne({
+      userId: session.user.id,
+      eventId,
+    });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json({ message: "Like not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Like removed successfully" });
+  } catch (error) {
+    console.error("Error removing like:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

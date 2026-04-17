@@ -103,22 +103,23 @@ function EventDisplay({ event, isLiked, likeCount, onLikeUpdate }: {
 
     setIsLoading(true);
     try {
+      const method = isLiked ? "DELETE" : "POST";
       const response = await fetch("/api/likes", {
-        method: "POST",
+        method,
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ eventId: event.url }),
       });
       if (response.ok) {
-        onLikeUpdate(); // Refresh likes after successful like
+        onLikeUpdate(); // Refresh likes after successful like/unlike
       } else {
         const data = await response.json();
-        alert(data.error || "Failed to like event");
+        alert(data.error || `Failed to ${isLiked ? "remove like" : "like"} event`);
       }
     } catch (error) {
-      console.error("Error liking event:", error);
-      alert("Error liking event");
+      console.error(`Error ${isLiked ? "unliking" : "liking"} event:`, error);
+      alert(`Error ${isLiked ? "removing like" : "liking"} event`);
     } finally {
       setIsLoading(false);
     }
@@ -166,7 +167,8 @@ function EventDisplay({ event, isLiked, likeCount, onLikeUpdate }: {
           {event.url && (
             <button
               onClick={handleLike}
-              disabled={isLoading || isLiked || !session}
+              disabled={isLoading || !session}
+              aria-label={isLiked ? "Unlike event" : "Like event"}
               className={`ml-2 mt-1 inline-flex items-center ${isLiked ? 'text-red-500' : session ? 'text-gray-400 hover:text-red-500' : 'text-gray-300 cursor-not-allowed'}`}
             >
               <HeartIcon filled={isLiked} />
