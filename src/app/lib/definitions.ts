@@ -12,7 +12,7 @@ export type Event = {
 
 export type Like = {
     userId: string,
-    eventId: string, // URL of the event
+    eventId: string, // Unique identifier for the event entry
 };
 
 export type Organization = {

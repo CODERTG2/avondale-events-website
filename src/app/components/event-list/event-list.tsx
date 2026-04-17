@@ -7,6 +7,10 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 
+function getEventId(event: Event) {
+  return event.url ? `${event.url}|${event.startDate}` : `${event.name}|${event.startDate}`;
+}
+
 export default function EventList({ events }: { events: Event[] }) {
   const { data: session } = useSession();
   const [likedEventIds, setLikedEventIds] = useState<string[]>([]);
@@ -67,16 +71,20 @@ function EventListDay({ daySchedule, likedEventIds, likeCounts, onLikeUpdate }: 
       </h2>
       <div className="pb-16">
         <ul className="text-sm list-none">
-          {daySchedule.events.map((event: Event, index: any) => (
-            <li key={index} className="flex items-start mb-6 min-w-0">
-              <EventDisplay 
-                event={event} 
-                isLiked={likedEventIds.includes(event.url || '')}
-                likeCount={likeCounts[event.url || ''] || 0}
-                onLikeUpdate={onLikeUpdate}
-              />
-            </li>
-          ))}
+          {daySchedule.events.map((event: Event) => {
+            const eventId = getEventId(event);
+            return (
+              <li key={eventId} className="flex items-start mb-6 min-w-0">
+                <EventDisplay 
+                  event={event} 
+                  eventId={eventId}
+                  isLiked={likedEventIds.includes(eventId)}
+                  likeCount={likeCounts[eventId] || 0}
+                  onLikeUpdate={onLikeUpdate}
+                />
+              </li>
+            );
+          })}
         </ul>
       </div>
     </>
@@ -85,8 +93,9 @@ function EventListDay({ daySchedule, likedEventIds, likeCounts, onLikeUpdate }: 
 
 
 
-function EventDisplay({ event, isLiked, likeCount, onLikeUpdate }: { 
+function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: { 
   event: Event; 
+  eventId: string;
   isLiked: boolean;
   likeCount: number;
   onLikeUpdate: () => void;
@@ -99,7 +108,6 @@ function EventDisplay({ event, isLiked, likeCount, onLikeUpdate }: {
       alert("Please log in to like events");
       return;
     }
-    if (!event.url) return;
 
     setIsLoading(true);
     try {
@@ -109,7 +117,7 @@ function EventDisplay({ event, isLiked, likeCount, onLikeUpdate }: {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ eventId: event.url }),
+        body: JSON.stringify({ eventId }),
       });
       if (response.ok) {
         onLikeUpdate(); // Refresh likes after successful like/unlike
