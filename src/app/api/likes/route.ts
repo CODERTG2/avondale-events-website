@@ -60,17 +60,23 @@ export async function POST(request: NextRequest) {
       eventId,
     };
 
-    // Check if like already exists
-    const existingLike = await db.collection("likes").findOne(like);
-    if (existingLike) {
+    await db.collection("likes").createIndex({ userId: 1, eventId: 1 }, { unique: true });
+
+    const result = await db.collection("likes").updateOne(
+      { userId: like.userId, eventId: like.eventId },
+      { $setOnInsert: like },
+      { upsert: true }
+    );
+
+    if (result.upsertedCount === 0) {
       return NextResponse.json({ message: "Already liked" }, { status: 200 });
     }
 
-    // Insert the like
-    await db.collection("likes").insertOne(like);
-
     return NextResponse.json({ message: "Like added successfully" });
   } catch (error) {
+    if ((error as { code?: number }).code === 11000) {
+      return NextResponse.json({ message: "Already liked" }, { status: 200 });
+    }
     console.error("Error adding like:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
