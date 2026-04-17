@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Sans } from 'next/font/google';
 import "../globals.css";
 import Navigation from "../components/navigation/navigation";
+import AuthSessionProvider from "../components/session-provider";
 
 const notoSans = Noto_Sans({
   subsets: ['latin'],
@@ -26,10 +27,12 @@ export default function RootLayout({
       <body
         className={`${notoSans.className} antialiased`}
       >
-        <Navigation />
-        <div className="flex-grow mt-16">
-          {children}
-        </div>
+        <AuthSessionProvider>
+          <Navigation />
+          <div className="flex-grow mt-16">
+            {children}
+          </div>
+        </AuthSessionProvider>
       </body>
     </html>
   );
