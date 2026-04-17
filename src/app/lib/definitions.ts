@@ -10,6 +10,11 @@ export type Event = {
     url?: string,
 };
 
+export type Like = {
+    userId: string,
+    eventId: string, // Unique identifier for the event entry
+};
+
 export type Organization = {
     name: string,
     eventApiType: string,

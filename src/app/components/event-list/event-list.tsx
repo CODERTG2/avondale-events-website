@@ -1,9 +1,41 @@
+"use client";
+
 import { Event } from "@/app/lib/definitions";
 import { formatTimeRange } from "@/app/lib/time";
 import { removePastEvents, generateEventSchedule, DaySchedule } from "../../lib/eventDisplay";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+
+function getEventId(event: Event) {
+  return event.url ? `${event.url}|${event.startDate}` : `${event.name}|${event.startDate}`;
+}
 
 export default function EventList({ events }: { events: Event[] }) {
+  const { data: session } = useSession();
+  const [likedEventIds, setLikedEventIds] = useState<string[]>([]);
+  const [likeCounts, setLikeCounts] = useState<{ [eventId: string]: number }>({});
+  const [loadingLikes, setLoadingLikes] = useState(false);
+
+  useEffect(() => {
+    fetchLikes();
+  }, [session]);
+
+  const fetchLikes = async () => {
+    setLoadingLikes(true);
+    try {
+      const response = await fetch("/api/likes");
+      if (response.ok) {
+        const data = await response.json();
+        setLikedEventIds(data.likedEventIds || []);
+        setLikeCounts(data.likeCounts || {});
+      }
+    } catch (error) {
+      console.error("Error fetching likes:", error);
+    } finally {
+      setLoadingLikes(false);
+    }
+  };
 
   let upcomingEvents = removePastEvents(events);
   let eventSchedule = generateEventSchedule(upcomingEvents);
@@ -12,14 +44,25 @@ export default function EventList({ events }: { events: Event[] }) {
     <>
       <div className="">
         {eventSchedule.map((daySchedule: DaySchedule) => (
-          <EventListDay daySchedule={daySchedule} key={daySchedule.dayDisplay} />
+          <EventListDay 
+            daySchedule={daySchedule} 
+            likedEventIds={likedEventIds}
+            likeCounts={likeCounts}
+            onLikeUpdate={fetchLikes}
+            key={daySchedule.dayDisplay} 
+          />
         ))}
       </div>
     </>
   );
 }
 
-function EventListDay({ daySchedule }: { daySchedule: DaySchedule }) {
+function EventListDay({ daySchedule, likedEventIds, likeCounts, onLikeUpdate }: { 
+  daySchedule: DaySchedule; 
+  likedEventIds: string[];
+  likeCounts: { [eventId: string]: number };
+  onLikeUpdate: () => void;
+}) {
 
   return (
     <>
@@ -28,11 +71,20 @@ function EventListDay({ daySchedule }: { daySchedule: DaySchedule }) {
       </h2>
       <div className="pb-16">
         <ul className="text-sm list-none">
-          {daySchedule.events.map((event: Event, index: any) => (
-            <li key={index} className="flex items-start mb-6 min-w-0">
-              <EventDisplay event={event} />
-            </li>
-          ))}
+          {daySchedule.events.map((event: Event) => {
+            const eventId = getEventId(event);
+            return (
+              <li key={eventId} className="flex items-start mb-6 min-w-0">
+                <EventDisplay 
+                  event={event} 
+                  eventId={eventId}
+                  isLiked={likedEventIds.includes(eventId)}
+                  likeCount={likeCounts[eventId] || 0}
+                  onLikeUpdate={onLikeUpdate}
+                />
+              </li>
+            );
+          })}
         </ul>
       </div>
     </>
@@ -41,7 +93,46 @@ function EventListDay({ daySchedule }: { daySchedule: DaySchedule }) {
 
 
 
-function EventDisplay({ event }: { event: Event }) {
+function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: { 
+  event: Event; 
+  eventId: string;
+  isLiked: boolean;
+  likeCount: number;
+  onLikeUpdate: () => void;
+}) {
+  const { data: session } = useSession();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLike = async () => {
+    if (!session) {
+      alert("Please log in to like events");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const method = isLiked ? "DELETE" : "POST";
+      const response = await fetch("/api/likes", {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ eventId }),
+      });
+      if (response.ok) {
+        onLikeUpdate(); // Refresh likes after successful like/unlike
+      } else {
+        const data = await response.json();
+        alert(data.error || `Failed to ${isLiked ? "remove like" : "like"} event`);
+      }
+    } catch (error) {
+      console.error(`Error ${isLiked ? "unliking" : "liking"} event:`, error);
+      alert(`Error ${isLiked ? "removing like" : "liking"} event`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   let timeDisplay = formatTimeRange(event);
   const locationLabel = event.venue || event.organizer?.name || "";
   const mapUrl = locationLabel
@@ -81,6 +172,17 @@ function EventDisplay({ event }: { event: Event }) {
               <span className="ml-1 break-words">{locationLabel}</span>
             </Link>
           )}
+          {event.url && (
+            <button
+              onClick={handleLike}
+              disabled={isLoading || !session}
+              aria-label={isLiked ? "Unlike event" : "Like event"}
+              className={`ml-2 mt-1 inline-flex items-center ${isLiked ? 'text-red-500' : session ? 'text-gray-400 hover:text-red-500' : 'text-gray-300 cursor-not-allowed'}`}
+            >
+              <HeartIcon filled={isLiked} />
+              <span className="ml-1">{likeCount > 0 ? likeCount : ''}</span>
+            </button>
+          )}
         </div>
       </div>
     </>
@@ -115,6 +217,25 @@ function MapPinIcon() {
         fillRule="evenodd"
         d="M11.54 22.351a.75.75 0 0 0 .92 0c1.622-1.288 6.79-5.874 6.79-11.101a7.25 7.25 0 1 0-14.5 0c0 5.227 5.168 9.813 6.79 11.1ZM12 14.25a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
         clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={filled ? 0 : 2}
+      className="size-3 inline-block"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
       />
     </svg>
   );
