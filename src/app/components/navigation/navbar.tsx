@@ -3,13 +3,13 @@ import Link from "next/link";
 export default function Navbar({ toggle }: { toggle: () => void }) {
   return (
     <>
-      <div className="w-full h-16 bg-white border-b-2 border-gray-200 fixed top-0 z-40">
+      <div className="w-full h-16 bg-white dark:bg-gray-900 border-b-2 border-gray-200 dark:border-gray-700 fixed top-0 z-40">
         <div className="lg:container mx-auto px-6 h-full">
           <div className="flex justify-between items-center h-full">
             <Link href="/" className="flex align-middle">
               <Logo />
               <div className="flex items-center ml-4">
-                <p className="text-black text-xl font-medium">Avondale Events</p>
+                <p className="text-black dark:text-white text-xl font-medium">Avondale Events</p>
               </div>
             </Link>
             <button className="cursor-pointer" onClick={toggle}>
@@ -29,7 +29,7 @@ function MenuIcon() {
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
-      className="h-6 w-6 text-black"
+      className="h-6 w-6 text-black dark:text-white"
     >
       <path
         strokeLinecap="round"

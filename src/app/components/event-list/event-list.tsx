@@ -66,7 +66,7 @@ function EventListDay({ daySchedule, likedEventIds, likeCounts, onLikeUpdate }: 
 
   return (
     <>
-      <h2 className="text-2xl py-2 mb-8 border-b-2 border-gray-300" >
+      <h2 className="text-2xl py-2 mb-8 border-b-2 border-gray-300 dark:border-gray-700" >
         {daySchedule.dayDisplay}
       </h2>
       <div className="pb-16">
@@ -148,14 +148,14 @@ function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
         {event.url ? (
           <Link href={event.url} className="inline-flex items-center hover:underline">
             <span>{event.name}</span>
-            <span className="ml-2 text-gray-600 flex items-center">
+            <span className="ml-2 text-gray-600 dark:text-gray-400 flex items-center">
               <LinkIcon />
             </span>
           </Link>
         ) : (
           <p>{event.name}</p>
         )}
-        <div className="text-xs mt-1 text-gray-600">
+        <div className="text-xs mt-1 text-gray-600 dark:text-gray-400">
           {event.organizer?.name && (
             <p className="break-words whitespace-normal break-all max-w-full">
               {event.organizer.name}
@@ -177,7 +177,7 @@ function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
               onClick={handleLike}
               disabled={isLoading || !session}
               aria-label={isLiked ? "Unlike event" : "Like event"}
-              className={`ml-2 mt-1 inline-flex items-center ${isLiked ? 'text-red-500' : session ? 'text-gray-400 hover:text-red-500' : 'text-gray-300 cursor-not-allowed'}`}
+              className={`ml-2 mt-1 inline-flex items-center ${isLiked ? 'text-red-500 dark:text-red-400' : session ? 'text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}`}
             >
               <HeartIcon filled={isLiked} />
               <span className="ml-1">{likeCount > 0 ? likeCount : ''}</span>
