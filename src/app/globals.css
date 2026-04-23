@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f7ff;
+  --foreground: #0f172a;
 }
 
 /* @media (prefers-color-scheme: dark) {
@@ -16,6 +16,9 @@
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at top left, #eef2ff 0%, transparent 38%),
+    radial-gradient(circle at top right, #dbeafe 0%, transparent 34%),
+    var(--background);
+  font-family: "Noto Sans", Arial, Helvetica, sans-serif;
 }

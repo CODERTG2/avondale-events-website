@@ -3,10 +3,13 @@ export type Event = {
     name: string,
     startDate: ISODate | ISODatetime,
     endDate?: ISODate | ISODatetime,
+    genre?: string,
+    venue?: string,
     organizer?: {
         name: string,
     },
     url?: string,
+    numLikes?: number,
 };
 
 export type Organization = {

@@ -2,23 +2,24 @@ import Link from "next/link";
 
 export default function Navbar({ toggle }: { toggle: () => void }) {
   return (
-    <>
-      <div className="w-full h-16 bg-white border-b-2 border-gray-200 fixed top-0 z-40">
-        <div className="lg:container mx-auto px-6 h-full">
-          <div className="flex justify-between items-center h-full">
-            <Link href="/" className="flex align-middle">
-              <Logo />
-              <div className="flex items-center ml-4">
-                <p className="text-black text-xl font-medium">Avondale Events</p>
-              </div>
-            </Link>
-            <button className="cursor-pointer" onClick={toggle}>
-              <MenuIcon />
-            </button>
+    <header className="sticky top-0 z-40 border-b border-indigo-100 bg-white/90 backdrop-blur">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 md:px-8">
+        <Link href="/" className="flex items-center">
+          <Logo />
+          <div className="ml-3">
+            <p className="text-base font-semibold text-slate-900 md:text-lg">Avondale Events</p>
+            <p className="text-xs text-slate-500">Neighborhood calendar + map</p>
           </div>
-        </div>
+        </Link>
+        <button
+          className="rounded-lg border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:border-indigo-300 hover:text-indigo-700"
+          onClick={toggle}
+          aria-label="Open menu"
+        >
+              <MenuIcon />
+        </button>
       </div>
-    </>
+    </header>
   );
 };
 
@@ -29,7 +30,7 @@ function MenuIcon() {
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
-      className="h-6 w-6 text-black"
+      className="h-5 w-5"
     >
       <path
         strokeLinecap="round"
@@ -44,9 +45,10 @@ function Logo() {
   return (
     <img
       src="../icon.png"
-      alt="ward wise logo"
-      width={50}
-      height={50}
+      alt="Avondale Events logo"
+      width={42}
+      height={42}
+      className="rounded-lg"
     />
   );
 }

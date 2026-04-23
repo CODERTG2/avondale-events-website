@@ -27,7 +27,7 @@ export default function RootLayout({
         className={`${notoSans.className} antialiased`}
       >
         <Navigation />
-        <div className="flex-grow mt-16">
+        <div className="flex-grow">
           {children}
         </div>
       </body>
