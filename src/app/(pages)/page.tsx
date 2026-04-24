@@ -1,6 +1,8 @@
 import EventList from "../components/event-list/event-list";
 import { MongoClient } from 'mongodb';
 
+export const revalidate = 86400;
+
 export default async function Home() {
   let events = [];
   const eventsSourceUrl = process.env.EVENTS_SOURCE_URL;
