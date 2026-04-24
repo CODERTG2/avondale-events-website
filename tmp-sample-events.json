@@ -1,0 +1,101 @@
+[
+  {
+    "name": "Karaoke with host Millie May",
+    "startDate": "2027-04-14T22:00:00-05:00",
+    "endDate": "2027-04-15T02:00:00-05:00",
+    "organizer": { "name": "Reed's Local" },
+    "url": "https://reedslocal.com/events/",
+    "genre": "Music",
+    "numLikes": 0
+  },
+  {
+    "name": "Wargame Wednesday: Build, Paint and Play! ",
+    "startDate": "2027-04-15T12:00:00-05:00",
+    "endDate": "2027-04-15T21:00:00-05:00",
+    "organizer": { "name": "Prism Games Chicago" },
+    "url": "https://www.prismgameschicago.com/event-details-registration/wargame-wednesday-build-paint-and-play-2026-04-15-12-00",
+    "genre": "Games",
+    "numLikes": 0
+  },
+  {
+    "name": "Community Day",
+    "startDate": "2027-04-15T20:00:00Z",
+    "endDate": "2027-04-16T01:00:00Z",
+    "organizer": { "name": "The Insect Asylum" },
+    "url": "https://www.eventbrite.com/e/community-day-at-the-insect-asylum-10-admission-for-everyone-tickets-1970000729212",
+    "genre": "Community",
+    "numLikes": 0
+  },
+  {
+    "name": "Insect Pinning Discount Day: Cicada Edition",
+    "startDate": "2027-04-15T20:30:00Z",
+    "endDate": "2027-04-15T21:30:00Z",
+    "organizer": { "name": "The Insect Asylum" },
+    "url": "https://www.eventbrite.com/e/insect-pinning-discount-day-cicada-edition-tickets-1966381744732",
+    "genre": "Creative Arts",
+    "numLikes": 0
+  },
+  {
+    "name": "Insect Pinning Discount Day: Butterfly Edition",
+    "startDate": "2027-04-15T22:00:00Z",
+    "endDate": "2027-04-15T23:00:00Z",
+    "organizer": { "name": "The Insect Asylum" },
+    "url": "https://www.eventbrite.com/e/insect-pinning-discount-day-butterfly-edition-tickets-1966381746738",
+    "genre": "Environmental / Community",
+    "numLikes": 0
+  },
+  {
+    "name": "Wine Tasting & Cheese Pairing",
+    "startDate": "2027-04-15T18:00:00-0500",
+    "endDate": "2027-04-15T20:00:00-0500",
+    "organizer": { "name": "Moody's Market" },
+    "url": "https://www.moodysmarket.com/moodyclasses/wine-tasting-cheese-pairing-5na2g",
+    "genre": "Food & Drink",
+    "numLikes": 0
+  },
+  {
+    "name": "Insect Pinning Discount Day: Beetle Edition",
+    "startDate": "2027-04-15T23:30:00Z",
+    "endDate": "2027-04-16T01:00:00Z",
+    "organizer": { "name": "The Insect Asylum" },
+    "url": "https://www.eventbrite.com/e/insect-pinning-discount-day-beetle-edition-tickets-1966381748744",
+    "genre": "Community",
+    "numLikes": 0
+  },
+  {
+    "name": "Ceramics Office Hours",
+    "startDate": "2027-04-15T18:30:00-05:00",
+    "endDate": "2027-04-15T19:30:00-05:00",
+    "organizer": { "name": "Pumping Station One" },
+    "url": "https://pumpingstationone.org/events",
+    "genre": "Creative Arts",
+    "numLikes": 0
+  },
+  {
+    "name": "Small Metals Office Hours",
+    "startDate": "2027-04-15T18:30:00-05:00",
+    "endDate": "2027-04-15T21:30:00-05:00",
+    "organizer": { "name": "Pumping Station One" },
+    "url": "https://pumpingstationone.org/events",
+    "genre": "Tech",
+    "numLikes": 0
+  },
+  {
+    "name": "AEW Watch Party",
+    "startDate": "2027-04-15T19:00:00-05:00",
+    "endDate": "2027-04-15T21:00:00-05:00",
+    "organizer": { "name": "Reed's Local" },
+    "url": "https://reedslocal.com/events/",
+    "genre": "Community",
+    "numLikes": 0
+  },
+  {
+    "name": "UPAC Officers Meeting (all members welcome)",
+    "startDate": "2027-04-15T19:00:00-05:00",
+    "endDate": "2027-04-15T19:30:00-05:00",
+    "organizer": { "name": "Unity Park" },
+    "url": "https://www.unityparkchicago.org/coming-events",
+    "genre": "Community",
+    "numLikes": 0
+  }
+]

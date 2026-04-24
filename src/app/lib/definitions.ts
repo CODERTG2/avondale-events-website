@@ -10,6 +10,8 @@ export type Event = {
     },
     url?: string,
     numLikes?: number,
+    latitude?: number,
+    longitude?: number,
 };
 
 export type Organization = {

@@ -1,4 +1,4 @@
-import { eventSort, formatDay, isISODate } from "@/app/lib/time";
+import { formatDay, isISODate } from "@/app/lib/time";
 import { Event } from "@/app/lib/definitions";
 
 export type DaySchedule = {
@@ -7,8 +7,9 @@ export type DaySchedule = {
 };
 
 
+/** Expects `events` to already be ordered (e.g. by time or distance). */
 export function generateEventSchedule(events: Event[]): DaySchedule[] {
-  let sortedEvents = events.sort(eventSort);
+  const sortedEvents = [...events];
 
   let eventSchedule: DaySchedule[] = [];
   let currentDay: any;
