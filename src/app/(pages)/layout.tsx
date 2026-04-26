@@ -3,6 +3,8 @@ import { Noto_Sans } from 'next/font/google';
 import "../globals.css";
 import Navigation from "../components/navigation/navigation";
 import AuthSessionProvider from "../components/session-provider";
+import { ThemeProvider } from "next-themes";
+import { ThemeToggle } from "../components/theme-toggle";
 
 const notoSans = Noto_Sans({
   subsets: ['latin'],
@@ -23,16 +25,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${notoSans.className} antialiased`}
       >
-        <AuthSessionProvider>
-          <Navigation />
-          <div className="flex-grow mt-16">
-            {children}
-          </div>
-        </AuthSessionProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <AuthSessionProvider>
+            <Navigation />
+            <div className="flex-grow mt-16">
+              {children}
+            </div>
+            <ThemeToggle />
+          </AuthSessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
