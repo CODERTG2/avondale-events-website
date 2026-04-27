@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 
 function getEventId(event: Event) {
-  return event.url ? `${event.url}|${event.startDate}` : `${event.name}|${event.startDate}`;
+  return event._id;
 }
 
 export default function EventList({ events }: { events: Event[] }) {
@@ -172,17 +172,15 @@ function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
               <span className="ml-1 break-words">{locationLabel}</span>
             </Link>
           )}
-          {event.url && (
-            <button
-              onClick={handleLike}
-              disabled={isLoading || !session}
-              aria-label={isLiked ? "Unlike event" : "Like event"}
-              className={`ml-2 mt-1 inline-flex items-center ${isLiked ? 'text-red-500 dark:text-red-400' : session ? 'text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}`}
-            >
-              <HeartIcon filled={isLiked} />
-              <span className="ml-1">{likeCount > 0 ? likeCount : ''}</span>
-            </button>
-          )}
+          <button
+            onClick={handleLike}
+            disabled={isLoading || !session}
+            aria-label={isLiked ? "Unlike event" : "Like event"}
+            className={`ml-2 mt-1 inline-flex items-center ${isLiked ? 'text-red-500 dark:text-red-400' : session ? 'text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}`}
+          >
+            <HeartIcon filled={isLiked} />
+            <span className="ml-1">{likeCount > 0 ? likeCount : ''}</span>
+          </button>
         </div>
       </div>
     </>
