@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth/auth";
 import { getDb } from "@/app/lib/auth/mongodb";
 import { Like } from "@/app/lib/definitions";
+import { ObjectId } from "mongodb";
 
 export async function GET() {
   try {
@@ -20,7 +21,8 @@ export async function GET() {
     // Convert to a map of eventId -> count
     const likeCountMap: { [eventId: string]: number } = {};
     likeCounts.forEach((item: any) => {
-      likeCountMap[item._id] = item.count;
+      // If item._id is an ObjectId, convert it to string
+      likeCountMap[item._id.toString()] = item.count;
     });
 
     const session = await auth();
@@ -29,7 +31,7 @@ export async function GET() {
     if (session?.user?.id) {
       // Get user's liked events
       const likes = await db.collection("likes").find({ userId: session.user.id }).toArray();
-      likedEventIds = likes.map((like) => (like as unknown as Like).eventId);
+      likedEventIds = likes.map((like) => like.eventId.toString());
     }
 
     return NextResponse.json({ 
@@ -55,9 +57,17 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDb();
-    const like: Like = {
+    
+    let objectId;
+    try {
+      objectId = new ObjectId(eventId);
+    } catch (e) {
+      return NextResponse.json({ error: "Invalid Event ID format" }, { status: 400 });
+    }
+
+    const like = {
       userId: session.user.id,
-      eventId,
+      eventId: objectId,
     };
 
     await db.collection("likes").createIndex({ userId: 1, eventId: 1 }, { unique: true });
@@ -95,9 +105,17 @@ export async function DELETE(request: NextRequest) {
     }
 
     const db = await getDb();
+    
+    let objectId;
+    try {
+      objectId = new ObjectId(eventId);
+    } catch (e) {
+      return NextResponse.json({ error: "Invalid Event ID format" }, { status: 400 });
+    }
+
     const result = await db.collection("likes").deleteOne({
       userId: session.user.id,
-      eventId,
+      eventId: objectId,
     });
 
     if (result.deletedCount === 0) {

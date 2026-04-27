@@ -1,5 +1,6 @@
 
 export type Event = {
+    _id: string,
     name: string,
     startDate: ISODate | ISODatetime,
     endDate?: ISODate | ISODatetime,
@@ -8,6 +9,7 @@ export type Event = {
         name: string,
     },
     url?: string,
+    embedding?: number[];
 };
 
 export type Like = {

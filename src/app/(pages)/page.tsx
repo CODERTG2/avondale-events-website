@@ -1,4 +1,5 @@
 import EventList from "../components/event-list/event-list";
+import Recommendations from "../components/recommendations/recommendations";
 import { MongoClient } from 'mongodb';
 
 export const revalidate = 86400; // Trigger background revalidation on Vercel every 24 hours (86400 seconds)
@@ -25,6 +26,7 @@ export default async function Home() {
   return (
     <div className="items-center justify-items-center min-h-screen p-6 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col items-center">
+        <Recommendations />
         <EventList events={events} />
       </main>
     </div>

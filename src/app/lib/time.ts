@@ -76,7 +76,7 @@ export function formatDay(event: Event) {
     return new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'numeric', day: 'numeric' }).format(date);
 }
 
-function getDateFromISODate(str: string) {
+export function getDateFromISODate(str: string) {
     // Create a new Date object directly for noon to prevent midnight local shifts
     let [year, month, day] = str.split('-');
     return new Date(+year, +month - 1, +day, 12, 0, 0); // Noon is safe from timezone shifts
@@ -122,9 +122,9 @@ export function eventSort(a: Event, b: Event) {
 
     // if all day event, place at the end of the day
     if (isISODate(a.startDate))
-        aDateTime.setDate(aDateTime.getDate() + 1);
+        aDateTime.setHours(23, 59, 59);
     if (isISODate(b.startDate))
-        bDateTime.setDate(bDateTime.getDate() + 1);
+        bDateTime.setHours(23, 59, 59);
 
     return aDateTime.getTime() - bDateTime.getTime();
 }
