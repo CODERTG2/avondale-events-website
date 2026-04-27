@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/app/lib/auth/auth";
 import { getDb } from "@/app/lib/auth/mongodb";
 import { Like } from "@/app/lib/definitions";
+import { ObjectId } from "mongodb";
+
+// Global cache to prevent re-evaluating recommendations unnecessarily
+const recurringCache = new Map<string, any>();
 
 /**
  * GET /api/recommendations/recurring
@@ -9,9 +13,6 @@ import { Like } from "@/app/lib/definitions";
  * Returns future events that have the EXACT same name and organizer
  * as events the logged-in user has liked. This surfaces recurring
  * instances of events the user already enjoys.
- *
- * ── HOW TO UPDATE THE BACKEND LOGIC ──
- * Edit this file: src/app/api/recommendations/recurring/route.ts
  */
 export async function GET() {
   try {
@@ -22,30 +23,32 @@ export async function GET() {
 
     const db = await getDb();
 
-    // 1. Fetch the user's liked event IDs
+    // 1. Fetch the user's liked event IDs (now MongoDB _id strings)
     const likes = await db
       .collection("likes")
       .find({ userId: session.user.id })
       .toArray();
-    const likedEventIds = likes.map((like) => (like as unknown as Like).eventId);
+    const likedEventIds = likes.map((like) => like.eventId.toString());
 
     if (likedEventIds.length === 0) {
       return NextResponse.json({ events: [] });
     }
 
-    // 2. Fetch the full event docs for the liked events to get name + organizer
+    // Check Cache
+    const cacheKey = `${session.user.id}_${likedEventIds.sort().join(",")}`;
+    if (recurringCache.has(cacheKey)) {
+      return NextResponse.json({ events: recurringCache.get(cacheKey) });
+    }
+
+    // 2. Fetch all events
     const allEvents = await db.collection("events").find({}).toArray();
 
-    // Build a set of liked event identifiers for fast lookup
-    // eventId format is either "url|startDate" or "name|startDate"
+    // Build a set of liked event _id strings for fast lookup
     const likedEventSet = new Set(likedEventIds);
 
-    // Identify the liked events from the full event list
+    // Identify the liked events from the full event list by matching _id
     const likedEvents = allEvents.filter((event: any) => {
-      const eventId = event.url
-        ? `${event.url}|${event.startDate}`
-        : `${event.name}|${event.startDate}`;
-      return likedEventSet.has(eventId);
+      return likedEventSet.has(event._id.toString());
     });
 
     // 3. Build fingerprints from liked events: "name|organizer"
@@ -59,12 +62,10 @@ export async function GET() {
     // 4. Find future events that match name+organizer but are NOT the same instance
     const now = new Date().toISOString();
     const recurringEvents = allEvents.filter((event: any) => {
-      const eventId = event.url
-        ? `${event.url}|${event.startDate}`
-        : `${event.name}|${event.startDate}`;
+      const eventIdStr = event._id.toString();
 
       // Skip events the user has already liked
-      if (likedEventSet.has(eventId)) return false;
+      if (likedEventSet.has(eventIdStr)) return false;
 
       // Must be in the future
       if (event.startDate < now) return false;
@@ -75,9 +76,13 @@ export async function GET() {
       return likedFingerprints.has(fingerprint);
     });
 
-    // Serialize for JSON
-    const serialized = JSON.parse(JSON.stringify(recurringEvents));
+    // Serialize for JSON (convert ObjectId to string)
+    const serialized = recurringEvents.map((event: any) => {
+      const { embedding, ...rest } = event;
+      return { ...rest, _id: event._id.toString() };
+    });
 
+    recurringCache.set(cacheKey, serialized);
     return NextResponse.json({ events: serialized });
   } catch (error) {
     console.error("Error fetching recurring recommendations:", error);

@@ -140,7 +140,7 @@ function RecommendationCard({ event }: { event: RecommendedEvent }) {
   const locationLabel = event.venue || event.organizer?.name || "";
 
   return (
-    <div className="flex-shrink-0 w-56 snap-start rounded-lg bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/50 p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div className="flex-shrink-0 w-56 snap-start rounded-lg bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/50 p-4 shadow-sm hover:shadow-md transition-all duration-200 dark:hover:bg-gray-700/80 dark:hover:border-gray-600/50">
       {/* Date chip */}
       <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
         {dayDisplay}
