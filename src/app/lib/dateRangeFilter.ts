@@ -59,40 +59,30 @@ export function getEventStartAsDate(event: Event): Date {
   return new Date(event.startDate);
 }
 
-export function isEventInDatePreset(
-  event: Event,
+export function getDatePresetRange(
   preset: DatePreset,
   customStart: string,
   customEnd: string,
   now: Date = new Date(),
-): boolean {
-  const start = getEventStartAsDate(event);
-
-  if (preset === "all") return true;
+): { start: Date; end: Date } | null {
+  if (preset === "all") return null;
 
   if (preset === "today") {
-    const a = startOfDay(now);
-    const b = endOfDay(now);
-    return start >= a && start <= b;
+    return { start: startOfDay(now), end: endOfDay(now) };
   }
 
   if (preset === "week") {
-    const a = getMondayOfWeek(now);
-    const b = getSundayOfWeek(now);
-    return start >= a && start <= b;
+    return { start: getMondayOfWeek(now), end: getSundayOfWeek(now) };
   }
 
   if (preset === "weekend") {
-    const { start: a, end: b } = getNextWeekendRange(now);
-    return start >= a && start <= b;
+    return getNextWeekendRange(now);
   }
 
   if (preset === "custom") {
-    if (!customStart || !customEnd) return true;
-    const a = startOfDay(new Date(customStart));
-    const b = endOfDay(new Date(customEnd));
-    return start >= a && start <= b;
+    if (!customStart || !customEnd) return null;
+    return { start: startOfDay(new Date(customStart)), end: endOfDay(new Date(customEnd)) };
   }
 
-  return true;
+  return null;
 }
