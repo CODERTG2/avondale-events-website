@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Event } from "@/app/lib/definitions";
-import { formatTimeRange, eventSort } from "@/app/lib/time";
+import { formatTimeRange, eventSort, formatDay } from "@/app/lib/time";
 import { removePastEvents, generateEventSchedule, DaySchedule } from "../../lib/eventDisplay";
 import Link from "next/link";
 import { CANONICAL_GENRE_TAGS, CanonicalGenre, getCanonicalGenreForEvent, getGenrePresentation } from "@/app/lib/genreTags";
@@ -80,6 +80,12 @@ export default function EventList({ events }: { events: Event[] }) {
       return haversineKm(userPos.lat, userPos.lng, c.lat, c.lng);
     };
     copy.sort((a, b) => {
+      const dayA = formatDay(a);
+      const dayB = formatDay(b);
+      if (dayA !== dayB) {
+        return eventSort(a, b);
+      }
+
       const da = distFor(a);
       const db = distFor(b);
       if (da != null && db != null && da !== db) return da - db;
