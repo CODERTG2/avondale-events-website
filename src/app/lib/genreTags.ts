@@ -39,8 +39,11 @@ export function getGenrePresentation(genre: CanonicalGenre) {
   return GENRE_PRESENTATION[genre];
 }
 
-function normalize(s: string) {
-  return s.trim().toLowerCase();
+function normalize(s: any) {
+  if (!s) return "";
+  if (Array.isArray(s)) return s.join(" ").toLowerCase();
+  if (typeof s === "string") return s.trim().toLowerCase();
+  return String(s).trim().toLowerCase();
 }
 
 /**
