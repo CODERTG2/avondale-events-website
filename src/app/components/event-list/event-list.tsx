@@ -2,17 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Event } from "@/app/lib/definitions";
-import { formatTimeRange, eventSort } from "@/app/lib/time";
+import { formatTimeRange, eventSort, formatDay } from "@/app/lib/time";
 import { removePastEvents, generateEventSchedule, DaySchedule } from "../../lib/eventDisplay";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import {
-  CANONICAL_GENRE_TAGS,
-  CanonicalGenre,
-  getCanonicalGenreForEvent,
-  getGenrePresentation,
-} from "@/app/lib/genreTags";
-import { DatePreset, isEventInDatePreset } from "@/app/lib/dateRangeFilter";
+import { CANONICAL_GENRE_TAGS, CanonicalGenre, getCanonicalGenreForEvent, getGenrePresentation } from "@/app/lib/genreTags";
+import { DatePreset, getDatePresetRange, getEventStartAsDate } from "@/app/lib/dateRangeFilter";
 import { geocodeWithNominatim, haversineKm } from "@/app/lib/geo";
 
 function getEventId(event: Event) {
@@ -34,6 +29,21 @@ export default function EventList({ events }: { events: Event[] }) {
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
   const [geoHint, setGeoHint] = useState<string | null>(null);
   const [coordByLabel, setCoordByLabel] = useState<Record<string, { lat: number; lng: number } | null>>({});
+  
+  const [isPending, setIsPending] = useState(false);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const withLoading = (updater: () => void) => {
+    setIsPending(true);
+    if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    
+    setTimeout(() => {
+      updater();
+      loadingTimeoutRef.current = setTimeout(() => {
+        setIsPending(false);
+      }, 400);
+    }, 50); // small delay to allow loading overlay to paint
+  };
 
   useEffect(() => {
     fetchLikes();
@@ -67,9 +77,15 @@ export default function EventList({ events }: { events: Event[] }) {
         return name.includes(q) || org.includes(q);
       });
     }
-    list = list.filter((event) =>
-      isEventInDatePreset(event, datePreset, customStart, customEnd),
-    );
+
+    const range = getDatePresetRange(datePreset, customStart, customEnd);
+    if (range) {
+      list = list.filter((event) => {
+        const start = getEventStartAsDate(event);
+        return start >= range.start && start <= range.end;
+      });
+    }
+
     if (selectedGenres.length > 0) {
       const set = new Set(selectedGenres);
       list = list.filter((event) => set.has(getCanonicalGenreForEvent(event)));
@@ -94,6 +110,12 @@ export default function EventList({ events }: { events: Event[] }) {
       return haversineKm(userPos.lat, userPos.lng, c.lat, c.lng);
     };
     copy.sort((a, b) => {
+      const dayA = formatDay(a);
+      const dayB = formatDay(b);
+      if (dayA !== dayB) {
+        return eventSort(a, b);
+      }
+
       const da = distFor(a);
       const db = distFor(b);
       if (da != null && db != null && da !== db) return da - db;
@@ -163,8 +185,10 @@ export default function EventList({ events }: { events: Event[] }) {
 
   const requestNearMe = () => {
     if (nearMeEnabled) {
-      setNearMeEnabled(false);
-      setGeoHint(null);
+      withLoading(() => {
+        setNearMeEnabled(false);
+        setGeoHint(null);
+      });
       return;
     }
     if (!navigator.geolocation) {
@@ -172,26 +196,34 @@ export default function EventList({ events }: { events: Event[] }) {
       return;
     }
     setGeoHint(null);
+    setIsPending(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
         setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setNearMeEnabled(true);
+        loadingTimeoutRef.current = setTimeout(() => setIsPending(false), 400);
       },
       () => {
         setGeoHint("Could not read your location. Check browser permissions.");
         setNearMeEnabled(false);
+        setIsPending(false);
       },
       { enableHighAccuracy: true, timeout: 12_000, maximumAge: 60_000 },
     );
   };
 
   const toggleGenre = (g: CanonicalGenre) => {
-    setSelectedGenres((prev) =>
-      prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g],
-    );
+    withLoading(() => {
+      setSelectedGenres((prev) =>
+        prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g],
+      );
+    });
   };
 
-  const clearGenres = () => setSelectedGenres([]);
+  const clearGenres = () => {
+    withLoading(() => setSelectedGenres([]));
+  };
 
   return (
     <div className="w-full max-w-5xl">
@@ -201,13 +233,18 @@ export default function EventList({ events }: { events: Event[] }) {
 
       <FilterToolbar
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={(v) => {
+          setSearchQuery(v); // Don't delay typing
+          if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+          setIsPending(true);
+          loadingTimeoutRef.current = setTimeout(() => setIsPending(false), 400);
+        }}
         datePreset={datePreset}
-        onDatePreset={setDatePreset}
+        onDatePreset={(v) => withLoading(() => setDatePreset(v))}
         customStart={customStart}
         customEnd={customEnd}
-        onCustomStart={setCustomStart}
-        onCustomEnd={setCustomEnd}
+        onCustomStart={(v) => withLoading(() => setCustomStart(v))}
+        onCustomEnd={(v) => withLoading(() => setCustomEnd(v))}
         selectedGenres={selectedGenres}
         onToggleGenre={toggleGenre}
         onClearGenres={clearGenres}
@@ -218,15 +255,27 @@ export default function EventList({ events }: { events: Event[] }) {
         totalCount={upcomingEvents.length}
       />
 
-      <div className="space-y-6">
+      <div className="relative space-y-6">
+        {isPending && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-slate-50/50 backdrop-blur-[2px]">
+            <div className="flex items-center space-x-3 rounded-full bg-white px-5 py-3 shadow-lg ring-1 ring-slate-900/5">
+              <svg className="size-5 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span className="text-sm font-medium text-slate-700">Refreshing events...</span>
+            </div>
+          </div>
+        )}
+        
         {eventSchedule.length ? (
-          eventSchedule.map((daySchedule: DaySchedule) => (
+          eventSchedule.map((daySchedule: DaySchedule, i: number) => (
             <EventListDay
               daySchedule={daySchedule}
               likedEventIds={likedEventIds}
               likeCounts={likeCounts}
               onLikeUpdate={fetchLikes}
-              key={daySchedule.dayDisplay}
+              key={`${daySchedule.dayDisplay}-${i}`}
             />
           ))
         ) : (
@@ -397,7 +446,7 @@ function FilterToolbar({
         Showing {visibleCount} of {totalCount} upcoming events.
         {nearMeEnabled && (
           <span className="ml-1">
-            Sorted by distance when location is available (geocoding may take a few seconds).
+            Loading...
           </span>
         )}
       </p>

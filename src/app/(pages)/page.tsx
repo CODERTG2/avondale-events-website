@@ -20,22 +20,27 @@ export default async function Home() {
   }
 
   if (!events.length) {
-  try {
-    const uri = process.env.MONGODB_URI;
-    if (uri) {
-      const client = new MongoClient(uri);
-      await client.connect();
-      const db = client.db();
-      const docs = await db.collection('events').find({}).toArray();
-      console.log(`Successfully fetched ${docs.length} events from MongoDB`);
-      events = JSON.parse(JSON.stringify(docs));
-      await client.close();
-    } else {
-      console.error("MONGODB_URI is not defined.");
+    try {
+      const uri = process.env.MONGODB_URI;
+      if (uri) {
+        const client = new MongoClient(uri);
+        await client.connect();
+        const db = client.db();
+        const docs = await db.collection('events').find({}).toArray();
+        console.log(`Successfully fetched ${docs.length} events from MongoDB`);
+        events = JSON.parse(JSON.stringify(docs));
+        await client.close();
+      } else {
+        const fs = require('fs');
+        const path = require('path');
+        const dataPath = path.join(process.cwd(), '../events.json');
+        console.log("Using local events.json for testing");
+        const fileData = fs.readFileSync(dataPath, 'utf-8');
+        events = JSON.parse(fileData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch events from MongoDB/JSON:", error);
     }
-  } catch (error) {
-    console.error("Failed to fetch events from MongoDB:", error);
-  }
   }
 
   return (
