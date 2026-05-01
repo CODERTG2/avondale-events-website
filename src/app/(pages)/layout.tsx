@@ -32,7 +32,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <AuthSessionProvider>
             <Navigation />
-            <div className="flex-grow mt-16">
+            <div className="flex-grow">
               {children}
             </div>
             <ThemeToggle />
