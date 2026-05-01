@@ -26,7 +26,7 @@ export async function geocodeWithNominatim(
 ): Promise<{ lat: number; lng: number } | null> {
   const q = query.trim();
   if (!q) return null;
-  const url = `/api/geocode?q=${encodeURIComponent(q)}`;
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
   const res = await fetch(url, { signal, headers: { Accept: "application/json" } });
   if (!res.ok) return null;
   const data = (await res.json()) as { lat?: string; lon?: string }[];
