@@ -1,11 +1,14 @@
 "use client";
 
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Event } from "@/app/lib/definitions";
-import { formatTimeRange } from "@/app/lib/time";
+import { formatTimeRange, eventSort, formatDay } from "@/app/lib/time";
 import { removePastEvents, generateEventSchedule, DaySchedule } from "../../lib/eventDisplay";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { CANONICAL_GENRE_TAGS, CanonicalGenre, getCanonicalGenreForEvent, getGenrePresentation } from "@/app/lib/genreTags";
+import { DatePreset, getDatePresetRange, getEventStartAsDate } from "@/app/lib/dateRangeFilter";
+import { geocodeWithNominatim, haversineKm } from "@/app/lib/geo";
 
 function getEventId(event: Event) {
   return event._id;
@@ -16,6 +19,31 @@ export default function EventList({ events }: { events: Event[] }) {
   const [likedEventIds, setLikedEventIds] = useState<string[]>([]);
   const [likeCounts, setLikeCounts] = useState<{ [eventId: string]: number }>({});
   const [loadingLikes, setLoadingLikes] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState<CanonicalGenre[]>([]);
+  const [datePreset, setDatePreset] = useState<DatePreset>("all");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [nearMeEnabled, setNearMeEnabled] = useState(false);
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoHint, setGeoHint] = useState<string | null>(null);
+  const [coordByLabel, setCoordByLabel] = useState<Record<string, { lat: number; lng: number } | null>>({});
+  
+  const [isPending, setIsPending] = useState(false);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const withLoading = (updater: () => void) => {
+    setIsPending(true);
+    if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+    
+    setTimeout(() => {
+      updater();
+      loadingTimeoutRef.current = setTimeout(() => {
+        setIsPending(false);
+      }, 400);
+    }, 50); // small delay to allow loading overlay to paint
+  };
 
   useEffect(() => {
     fetchLikes();
@@ -37,46 +65,431 @@ export default function EventList({ events }: { events: Event[] }) {
     }
   };
 
-  let upcomingEvents = removePastEvents(events);
-  let eventSchedule = generateEventSchedule(upcomingEvents);
+  const upcomingEvents = useMemo(() => removePastEvents(events), [events]);
+
+  const filteredEvents = useMemo(() => {
+    let list = upcomingEvents;
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter((event) => {
+        const name = event.name.toLowerCase();
+        const org = (event.organizer?.name || "").toLowerCase();
+        return name.includes(q) || org.includes(q);
+      });
+    }
+
+    const range = getDatePresetRange(datePreset, customStart, customEnd);
+    if (range) {
+      list = list.filter((event) => {
+        const start = getEventStartAsDate(event);
+        return start >= range.start && start <= range.end;
+      });
+    }
+
+    if (selectedGenres.length > 0) {
+      const set = new Set(selectedGenres);
+      list = list.filter((event) => set.has(getCanonicalGenreForEvent(event)));
+    }
+    return list;
+  }, [upcomingEvents, searchQuery, datePreset, customStart, customEnd, selectedGenres]);
+
+  const sortedEvents = useMemo(() => {
+    const copy = [...filteredEvents];
+    if (!nearMeEnabled || !userPos) {
+      copy.sort(eventSort);
+      return copy;
+    }
+    const distFor = (event: Event): number | null => {
+      if (event.latitude != null && event.longitude != null) {
+        return haversineKm(userPos.lat, userPos.lng, event.latitude, event.longitude);
+      }
+      const label = (event.venue || event.organizer?.name || "").trim();
+      if (!label) return null;
+      const c = coordByLabel[label];
+      if (!c) return null;
+      return haversineKm(userPos.lat, userPos.lng, c.lat, c.lng);
+    };
+    copy.sort((a, b) => {
+      const dayA = formatDay(a);
+      const dayB = formatDay(b);
+      if (dayA !== dayB) {
+        return eventSort(a, b);
+      }
+
+      const da = distFor(a);
+      const db = distFor(b);
+      if (da != null && db != null && da !== db) return da - db;
+      if (da != null && db == null) return -1;
+      if (da == null && db != null) return 1;
+      return eventSort(a, b);
+    });
+    return copy;
+  }, [filteredEvents, nearMeEnabled, userPos, coordByLabel]);
+
+  const eventSchedule = useMemo(
+    () => generateEventSchedule(sortedEvents),
+    [sortedEvents],
+  );
+
+  const labelsToGeocode = useMemo(() => {
+    if (!nearMeEnabled || !userPos) return [];
+    const labels = new Set<string>();
+    for (const event of filteredEvents) {
+      if (event.latitude != null && event.longitude != null) continue;
+      const label = (event.venue || event.organizer?.name || "").trim();
+      if (!label) continue;
+      if (coordByLabel[label] !== undefined) continue;
+      labels.add(label);
+    }
+    return [...labels];
+  }, [nearMeEnabled, userPos, filteredEvents, coordByLabel]);
+
+  const geoRequestedRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    if (!nearMeEnabled || !userPos || labelsToGeocode.length === 0) return;
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    const run = async () => {
+      for (const label of labelsToGeocode) {
+        if (signal.aborted) break;
+        if (geoRequestedRef.current.has(label)) continue;
+        geoRequestedRef.current.add(label);
+        
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(resolve, 1100);
+            signal.addEventListener('abort', () => {
+              clearTimeout(timeout);
+              reject(new Error('aborted'));
+            }, { once: true });
+          });
+        } catch {
+          break; // Aborted during delay
+        }
+
+        if (signal.aborted) break;
+        const query = `${label}, Avondale, Chicago, IL, USA`;
+        try {
+          const coords = await geocodeWithNominatim(query, signal);
+          if (!signal.aborted) {
+            setCoordByLabel((prev) => ({ ...prev, [label]: coords }));
+          }
+        } catch (err: any) {
+          if (err.name === 'AbortError') break;
+          if (!signal.aborted) {
+            setCoordByLabel((prev) => ({ ...prev, [label]: null }));
+          }
+        }
+      }
+    };
+
+    void run();
+    return () => {
+      controller.abort();
+    };
+  }, [nearMeEnabled, userPos, labelsToGeocode]);
+
+  useEffect(() => {
+    if (!nearMeEnabled) {
+      geoRequestedRef.current = new Set();
+    }
+  }, [nearMeEnabled]);
+
+  const requestNearMe = () => {
+    if (nearMeEnabled) {
+      withLoading(() => {
+        setNearMeEnabled(false);
+        setGeoHint(null);
+      });
+      return;
+    }
+    if (!navigator.geolocation) {
+      setGeoHint("Location is not supported in this browser.");
+      return;
+    }
+    setGeoHint(null);
+    setIsPending(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setNearMeEnabled(true);
+        loadingTimeoutRef.current = setTimeout(() => setIsPending(false), 400);
+      },
+      () => {
+        setGeoHint("Could not read your location. Check browser permissions.");
+        setNearMeEnabled(false);
+        setIsPending(false);
+      },
+      { enableHighAccuracy: true, timeout: 12_000, maximumAge: 60_000 },
+    );
+  };
+
+  const toggleGenre = (g: CanonicalGenre) => {
+    withLoading(() => {
+      setSelectedGenres((prev) =>
+        prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g],
+      );
+    });
+  };
+
+  const clearGenres = () => {
+    withLoading(() => setSelectedGenres([]));
+  };
 
   return (
-    <>
-      <div className="">
-        {eventSchedule.map((daySchedule: DaySchedule) => (
-          <EventListDay 
-            daySchedule={daySchedule} 
-            likedEventIds={likedEventIds}
-            likeCounts={likeCounts}
-            onLikeUpdate={fetchLikes}
-            key={daySchedule.dayDisplay} 
-          />
-        ))}
+    <div className="w-full max-w-5xl">
+      <p className="mb-3 text-xs text-slate-600 dark:text-slate-400">
+        Browse neighborhood events with quick venue map previews.
+      </p>
+
+      <FilterToolbar
+        searchQuery={searchQuery}
+        onSearchChange={(v) => {
+          setSearchQuery(v); // Don't delay typing
+          if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
+          setIsPending(true);
+          loadingTimeoutRef.current = setTimeout(() => setIsPending(false), 400);
+        }}
+        datePreset={datePreset}
+        onDatePreset={(v) => withLoading(() => setDatePreset(v))}
+        customStart={customStart}
+        customEnd={customEnd}
+        onCustomStart={(v) => withLoading(() => setCustomStart(v))}
+        onCustomEnd={(v) => withLoading(() => setCustomEnd(v))}
+        selectedGenres={selectedGenres}
+        onToggleGenre={toggleGenre}
+        onClearGenres={clearGenres}
+        nearMeEnabled={nearMeEnabled}
+        onNearMe={requestNearMe}
+        geoHint={geoHint}
+        visibleCount={filteredEvents.length}
+        totalCount={upcomingEvents.length}
+      />
+
+      <div className="relative space-y-6">
+        {isPending && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-slate-50/50 backdrop-blur-[2px]">
+            <div className="flex items-center space-x-3 rounded-full bg-white px-5 py-3 shadow-lg ring-1 ring-slate-900/5">
+              <svg className="size-5 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span className="text-sm font-medium text-slate-700">Refreshing events...</span>
+            </div>
+          </div>
+        )}
+        
+        {eventSchedule.length ? (
+          eventSchedule.map((daySchedule: DaySchedule, i: number) => (
+            <EventListDay
+              daySchedule={daySchedule}
+              likedEventIds={likedEventIds}
+              likeCounts={likeCounts}
+              onLikeUpdate={fetchLikes}
+              key={`${daySchedule.dayDisplay}-${i}`}
+            />
+          ))
+        ) : (
+          <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-5 text-center shadow-sm">
+            <p className="text-sm font-medium text-slate-900 dark:text-slate-100">No events match your filters yet.</p>
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+              Try clearing search, widening the date range, or selecting different tags.
+            </p>
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 
-function EventListDay({ daySchedule, likedEventIds, likeCounts, onLikeUpdate }: { 
-  daySchedule: DaySchedule; 
+function FilterToolbar({
+  searchQuery,
+  onSearchChange,
+  datePreset,
+  onDatePreset,
+  customStart,
+  customEnd,
+  onCustomStart,
+  onCustomEnd,
+  selectedGenres,
+  onToggleGenre,
+  onClearGenres,
+  nearMeEnabled,
+  onNearMe,
+  geoHint,
+  visibleCount,
+  totalCount,
+}: {
+  searchQuery: string;
+  onSearchChange: (v: string) => void;
+  datePreset: DatePreset;
+  onDatePreset: (v: DatePreset) => void;
+  customStart: string;
+  customEnd: string;
+  onCustomStart: (v: string) => void;
+  onCustomEnd: (v: string) => void;
+  selectedGenres: CanonicalGenre[];
+  onToggleGenre: (g: CanonicalGenre) => void;
+  onClearGenres: () => void;
+  nearMeEnabled: boolean;
+  onNearMe: () => void;
+  geoHint: string | null;
+  visibleCount: number;
+  totalCount: number;
+}) {
+  const presetBtn = (preset: DatePreset, label: string) => {
+    const active = datePreset === preset;
+    return (
+      <button
+        key={preset}
+        type="button"
+        onClick={() => onDatePreset(preset)}
+        className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+          active
+            ? "border-indigo-600 bg-indigo-600 text-white"
+            : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-400"
+        }`}
+        aria-pressed={active}
+      >
+        {label}
+      </button>
+    );
+  };
+
+  return (
+    <section className="mb-5 space-y-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 p-3 shadow-sm">
+      <div>
+        <label htmlFor="event-search" className="text-xs font-medium text-slate-600 dark:text-slate-400">
+          Search
+        </label>
+        <input
+          id="event-search"
+          type="search"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search by event or organizer…"
+          className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 shadow-sm outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
+        />
+      </div>
+
+      <div>
+        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">When</p>
+        <div className="mt-1 flex flex-wrap gap-2">
+          {presetBtn("all", "All dates")}
+          {presetBtn("today", "Today")}
+          {presetBtn("week", "This week")}
+          {presetBtn("weekend", "Weekend")}
+          {presetBtn("custom", "Custom")}
+        </div>
+        {datePreset === "custom" && (
+          <div className="mt-2 flex flex-wrap items-end gap-2">
+            <label className="text-xs text-slate-600 dark:text-slate-400">
+              From
+              <input
+                type="date"
+                value={customStart}
+                onChange={(e) => onCustomStart(e.target.value)}
+                className="mt-0.5 block rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-sm text-slate-900 dark:text-slate-100"
+              />
+            </label>
+            <label className="text-xs text-slate-600 dark:text-slate-400">
+              To
+              <input
+                type="date"
+                value={customEnd}
+                onChange={(e) => onCustomEnd(e.target.value)}
+                className="mt-0.5 block rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-sm text-slate-900 dark:text-slate-100"
+              />
+            </label>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="w-full text-xs font-medium text-slate-600 dark:text-slate-400 sm:w-auto">Tags (any match)</p>
+          <button
+            type="button"
+            onClick={onClearGenres}
+            className="rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-400"
+          >
+            Clear tags
+          </button>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {CANONICAL_GENRE_TAGS.map((genre) => {
+            const active = selectedGenres.includes(genre);
+            const { emoji, className } = getGenrePresentation(genre);
+            return (
+              <button
+                key={genre}
+                type="button"
+                onClick={() => onToggleGenre(genre)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                  active ? `${className} ring-2 ring-indigo-400 ring-offset-1` : `${className} opacity-80 hover:opacity-100`
+                }`}
+                aria-pressed={active}
+              >
+                <span className="mr-1">{emoji}</span>
+                {genre}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={onNearMe}
+          className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+            nearMeEnabled
+              ? "border-emerald-600 bg-emerald-600 text-white"
+              : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-400"
+          }`}
+        >
+          📍 Near me
+        </button>
+        {geoHint && <p className="text-xs text-amber-800">{geoHint}</p>}
+      </div>
+
+      <p className="text-xs text-slate-600 dark:text-slate-400">
+        Showing {visibleCount} of {totalCount} upcoming events.
+        {nearMeEnabled && (
+          <span className="ml-1">
+            Loading...
+          </span>
+        )}
+      </p>
+    </section>
+  );
+}
+
+function EventListDay({ daySchedule, likedEventIds, likeCounts, onLikeUpdate }: {
+  daySchedule: DaySchedule;
   likedEventIds: string[];
   likeCounts: { [eventId: string]: number };
   onLikeUpdate: () => void;
 }) {
-
   return (
-    <>
-      <h2 className="text-2xl py-2 mb-8 border-b-2 border-gray-300 dark:border-gray-700" >
+    <section>
+      <h2 className="mb-3 inline-flex rounded-full border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-0.5 text-sm font-semibold text-indigo-800 dark:text-indigo-300">
         {daySchedule.dayDisplay}
       </h2>
-      <div className="pb-16">
-        <ul className="text-sm list-none">
+      <div className="pb-3">
+        <ul className="list-none space-y-2.5 text-sm">
           {daySchedule.events.map((event: Event) => {
             const eventId = getEventId(event);
             return (
-              <li key={eventId} className="flex items-start mb-6 min-w-0">
-                <EventDisplay 
-                  event={event} 
+              <li
+                key={eventId}
+                className="min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 p-3 shadow-sm"
+              >
+                <EventDisplay
+                  event={event}
                   eventId={eventId}
                   isLiked={likedEventIds.includes(eventId)}
                   likeCount={likeCounts[eventId] || 0}
@@ -87,14 +500,12 @@ function EventListDay({ daySchedule, likedEventIds, likeCounts, onLikeUpdate }: 
           })}
         </ul>
       </div>
-    </>
+    </section>
   );
-};
+}
 
-
-
-function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: { 
-  event: Event; 
+function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
+  event: Event;
   eventId: string;
   isLiked: boolean;
   likeCount: number;
@@ -102,6 +513,7 @@ function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
 }) {
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   const handleLike = async () => {
     if (!session) {
@@ -133,61 +545,111 @@ function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
     }
   };
 
-  let timeDisplay = formatTimeRange(event);
+  const timeDisplay = formatTimeRange(event);
   const locationLabel = event.venue || event.organizer?.name || "";
-  const mapUrl = locationLabel
+  const mapEmbedUrl = locationLabel
+    ? `https://www.google.com/maps?q=${encodeURIComponent(locationLabel)}&output=embed`
+    : undefined;
+  const mapOpenUrl = locationLabel
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationLabel)}`
     : undefined;
+  const canonical = getCanonicalGenreForEvent(event);
+  const tag = getGenrePresentation(canonical);
 
   return (
-    <>
-      <p className="w-1/3 font-semibold pr-6 text-right">
-        {timeDisplay}
-      </p>
-      <div className="w-2/3 min-w-0 max-w-full">
+    <div className="grid gap-2.5 md:grid-cols-[140px_1fr]">
+      <div className="rounded-lg bg-slate-50 dark:bg-slate-700/50 p-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Time</p>
+        <p className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{timeDisplay}</p>
+      </div>
+      <div className="min-w-0 max-w-full">
         {event.url ? (
-          <Link href={event.url} className="inline-flex items-center hover:underline">
-            <span>{event.name}</span>
-            <span className="ml-2 text-gray-600 dark:text-gray-400 flex items-center">
+          <Link
+            href={event.url}
+            className="inline-flex items-center text-base font-semibold text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-400 hover:underline"
+          >
+            <span className="break-words">{event.name}</span>
+            <span className="ml-2 flex items-center text-slate-500 dark:text-slate-400">
               <LinkIcon />
             </span>
           </Link>
         ) : (
-          <p>{event.name}</p>
+          <p className="break-words text-lg font-semibold text-slate-900 dark:text-slate-100">{event.name}</p>
         )}
-        <div className="text-xs mt-1 text-gray-600 dark:text-gray-400">
+        <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
           {event.organizer?.name && (
-            <p className="break-words whitespace-normal break-all max-w-full">
-              {event.organizer.name}
-            </p>
+            <p className="max-w-full break-words">{event.organizer.name}</p>
           )}
-          {mapUrl && (
-            <Link
-              href={mapUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center mt-1 hover:underline"
-            >
-              <MapPinIcon />
-              <span className="ml-1 break-words">{locationLabel}</span>
-            </Link>
-          )}
+        </div>
+
+        {/* Genre tag + Like button row */}
+        <div className="mt-1 flex items-center gap-2 flex-wrap">
+          <p
+            className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${tag.className}`}
+          >
+            <span className="mr-1">{tag.emoji}</span>
+            {canonical}
+          </p>
+
           <button
             onClick={handleLike}
             disabled={isLoading || !session}
             aria-label={isLiked ? "Unlike event" : "Like event"}
-            className={`ml-2 mt-1 inline-flex items-center ${isLiked ? 'text-red-500 dark:text-red-400' : session ? 'text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'}`}
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs transition ${
+              isLiked
+                ? "text-red-500"
+                : session
+                  ? "text-slate-400 hover:text-red-500"
+                  : "text-slate-300 cursor-not-allowed"
+            }`}
           >
             <HeartIcon filled={isLiked} />
             <span className="ml-1">{likeCount > 0 ? likeCount : ''}</span>
           </button>
         </div>
+
+        {mapEmbedUrl && !showMap && (
+          <button
+            onClick={() => setShowMap(true)}
+            className="mt-2 flex w-full items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          >
+            <MapPinIcon />
+            <span className="ml-1">Show Map Preview</span>
+          </button>
+        )}
+        {mapEmbedUrl && showMap && (
+          <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+            <iframe
+              title={`Map for ${event.name}`}
+              src={mapEmbedUrl}
+              loading="lazy"
+              className="h-36 w-full"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+            {mapOpenUrl && (
+              <div className="flex justify-end bg-slate-50 dark:bg-slate-800 px-2 py-1.5">
+                <Link
+                  href={mapOpenUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-xs font-medium text-indigo-700 dark:text-indigo-400 hover:underline"
+                >
+                  <MapPinIcon />
+                  <span className="ml-1">Open on Google Maps</span>
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+        {!mapEmbedUrl && (
+          <p className="mt-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-400">
+            No venue details available for map preview.
+          </p>
+        )}
       </div>
-    </>
+    </div>
   );
-};
-
-
+}
 
 function LinkIcon() {
   return (
@@ -195,10 +657,18 @@ function LinkIcon() {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 20 20"
       fill="currentColor"
-      className="size-3 inline-block"
+      className="inline-block size-4"
     >
-      <path fillRule="evenodd" d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17h-8.5A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Z" clipRule="evenodd" />
-      <path fillRule="evenodd" d="M6.194 12.753a.75.75 0 0 0 1.06.053L16.5 4.44v2.81a.75.75 0 0 0 1.5 0v-4.5a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0 0 1.5h2.553l-9.056 8.194a.75.75 0 0 0-.053 1.06Z" clipRule="evenodd" />
+      <path
+        fillRule="evenodd"
+        d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17h-8.5A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Z"
+        clipRule="evenodd"
+      />
+      <path
+        fillRule="evenodd"
+        d="M6.194 12.753a.75.75 0 0 0 1.06.053L16.5 4.44v2.81a.75.75 0 0 0 1.5 0v-4.5a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0 0 1.5h2.553l-9.056 8.194a.75.75 0 0 0-.053 1.06Z"
+        clipRule="evenodd"
+      />
     </svg>
   );
 }
@@ -209,7 +679,7 @@ function MapPinIcon() {
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="currentColor"
-      className="size-3 inline-block"
+      className="inline-block size-4"
     >
       <path
         fillRule="evenodd"
@@ -228,7 +698,7 @@ function HeartIcon({ filled }: { filled: boolean }) {
       fill={filled ? "currentColor" : "none"}
       stroke="currentColor"
       strokeWidth={filled ? 0 : 2}
-      className="size-3 inline-block"
+      className="inline-block size-4"
     >
       <path
         strokeLinecap="round"

@@ -6,26 +6,46 @@ export const revalidate = 86400; // Trigger background revalidation on Vercel ev
 
 export default async function Home() {
   let events = [];
-  try {
-    const uri = process.env.MONGODB_URI;
-    if (uri) {
-      const client = new MongoClient(uri);
-      await client.connect();
-      const db = client.db();
-      const docs = await db.collection('events').find({}).toArray();
-      console.log(`Successfully fetched ${docs.length} events from MongoDB`);
-      events = JSON.parse(JSON.stringify(docs));
-      await client.close();
-    } else {
-      console.error("MONGODB_URI is not defined.");
+  const eventsSourceUrl = process.env.EVENTS_SOURCE_URL;
+  if (eventsSourceUrl) {
+    try {
+      const response = await fetch(eventsSourceUrl, { next: { revalidate } });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      events = await response.json();
+    } catch (error) {
+      console.error("Failed to fetch events from EVENTS_SOURCE_URL:", error);
     }
-  } catch (error) {
-    console.error("Failed to fetch events from MongoDB:", error);
+  }
+
+  if (!events.length) {
+    try {
+      const uri = process.env.MONGODB_URI;
+      if (uri) {
+        const client = new MongoClient(uri);
+        await client.connect();
+        const db = client.db();
+        const docs = await db.collection('events').find({}).toArray();
+        console.log(`Successfully fetched ${docs.length} events from MongoDB`);
+        events = JSON.parse(JSON.stringify(docs));
+        await client.close();
+      } else {
+        const fs = require('fs');
+        const path = require('path');
+        const dataPath = path.join(process.cwd(), '../events.json');
+        console.log("Using local events.json for testing");
+        const fileData = fs.readFileSync(dataPath, 'utf-8');
+        events = JSON.parse(fileData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch events from MongoDB/JSON:", error);
+    }
   }
 
   return (
-    <div className="items-center justify-items-center min-h-screen p-6 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col items-center">
+    <div className="min-h-screen px-3 py-4 md:px-6 md:py-5">
+      <main className="mx-auto flex w-full max-w-6xl flex-col">
         <Recommendations />
         <EventList events={events} />
       </main>

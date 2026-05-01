@@ -3,19 +3,35 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f7ff;
+  --foreground: #0f172a;
 }
 
-.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+html.dark {
+  --background: #0f172a;
+  --foreground: #e2e8f0;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Noto Sans", Arial, Helvetica, sans-serif;
+}
+
+/* Light mode: subtle radial accents */
+html:not(.dark) body {
+  background:
+    radial-gradient(circle at top left, #eef2ff 0%, transparent 38%),
+    radial-gradient(circle at top right, #dbeafe 0%, transparent 34%),
+    var(--background);
+}
+
+/* Dark mode: subtle mesh gradient for depth */
+html.dark body {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+    var(--background);
 }
 
 /* Thin scrollbar for recommendation carousels */
@@ -41,4 +57,3 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
