@@ -28,8 +28,8 @@
   },
   {
     "name": "Music in the Garden Festival: Night 1",
-    "startDate": "2024-11-09T20:00:00-06:00",
-    "endDate": "2024-11-09T23:00:00-06:00",
+    "startDate": "2024-11-09T20:00:00-0600",
+    "endDate": "2024-11-09T23:00:00-0600",
     "organizer": {
       "name": "Elastic Arts"
     },
@@ -46,8 +46,8 @@
   },
   {
     "name": "Pasta 101 Class",
-    "startDate": "2024-11-10T11:00:00-06:00",
-    "endDate": "2024-11-10T13:30:00-06:00",
+    "startDate": "2024-11-10T11:00:00-0600",
+    "endDate": "2024-11-10T13:30:00-0600",
     "organizer": {
       "name": "Tutore"
     },
@@ -80,8 +80,8 @@
   },
   {
     "name": "Intro to Bookbinding: Notebook",
-    "startDate": "2024-11-10T13:30:00-06:00",
-    "endDate": "2024-11-10T15:30:00-06:00",
+    "startDate": "2024-11-10T13:30:00-0600",
+    "endDate": "2024-11-10T15:30:00-0600",
     "organizer": {
       "name": "Firefly Fiber Arts Studio"
     },
@@ -125,8 +125,8 @@
   },
   {
     "name": "Music in the Garden Festival: Night 2",
-    "startDate": "2024-11-10T20:00:00-06:00",
-    "endDate": "2024-11-10T23:00:00-06:00",
+    "startDate": "2024-11-10T20:00:00-0600",
+    "endDate": "2024-11-10T23:00:00-0600",
     "organizer": {
       "name": "Elastic Arts"
     },
@@ -405,8 +405,8 @@
   },
   {
     "name": "Couples Venetian Dinner Party",
-    "startDate": "2024-11-15T18:30:00-06:00",
-    "endDate": "2024-11-15T21:00:00-06:00",
+    "startDate": "2024-11-15T18:30:00-0600",
+    "endDate": "2024-11-15T21:00:00-0600",
     "organizer": {
       "name": "Tutore"
     },
@@ -432,8 +432,8 @@
   },
   {
     "name": "Elastro: Garden Parties, Nolan Chin, Jack Langdon & Olivia Shortt",
-    "startDate": "2024-11-15T20:00:00-06:00",
-    "endDate": "2024-11-15T23:00:00-06:00",
+    "startDate": "2024-11-15T20:00:00-0600",
+    "endDate": "2024-11-15T23:00:00-0600",
     "organizer": {
       "name": "Elastic Arts"
     },
@@ -493,8 +493,8 @@
   },
   {
     "name": "Fixing Common Knitting Mistakes: Part 2",
-    "startDate": "2024-11-16T15:30:00-06:00",
-    "endDate": "2024-11-16T17:30:00-06:00",
+    "startDate": "2024-11-16T15:30:00-0600",
+    "endDate": "2024-11-16T17:30:00-0600",
     "organizer": {
       "name": "Firefly Fiber Arts Studio"
     },
@@ -502,8 +502,8 @@
   },
   {
     "name": "Sicilian Class",
-    "startDate": "2024-11-16T18:00:00-06:00",
-    "endDate": "2024-11-16T20:30:00-06:00",
+    "startDate": "2024-11-16T18:00:00-0600",
+    "endDate": "2024-11-16T20:30:00-0600",
     "organizer": {
       "name": "Tutore Cooking School"
     },
@@ -572,8 +572,8 @@
   },
   {
     "name": "Happy Hour Pizza Making Class",
-    "startDate": "2024-11-17T11:00:00-06:00",
-    "endDate": "2024-11-17T13:00:00-06:00",
+    "startDate": "2024-11-17T11:00:00-0600",
+    "endDate": "2024-11-17T13:00:00-0600",
     "organizer": {
       "name": "Tutore"
     },
@@ -590,8 +590,8 @@
   },
   {
     "name": "Colorwork Cowl Workshop",
-    "startDate": "2024-11-17T12:00:00-06:00",
-    "endDate": "2024-11-17T14:00:00-06:00",
+    "startDate": "2024-11-17T12:00:00-0600",
+    "endDate": "2024-11-17T14:00:00-0600",
     "organizer": {
       "name": "Firefly Fiber Arts Studio"
     },
@@ -608,8 +608,8 @@
   },
   {
     "name": "Grandmacore Balaclava: Intro to Lace Workshop",
-    "startDate": "2024-11-17T15:00:00-06:00",
-    "endDate": "2024-11-17T16:00:00-06:00",
+    "startDate": "2024-11-17T15:00:00-0600",
+    "endDate": "2024-11-17T16:00:00-0600",
     "organizer": {
       "name": "Firefly Fiber Arts Studio"
     },
@@ -626,8 +626,8 @@
   },
   {
     "name": "Homeroom Presents: Spectralina Film Premiere",
-    "startDate": "2024-11-17T17:45:00-06:00",
-    "endDate": "2024-11-17T20:00:00-06:00",
+    "startDate": "2024-11-17T17:45:00-0600",
+    "endDate": "2024-11-17T20:00:00-0600",
     "organizer": {
       "name": "Elastic Arts"
     },
@@ -687,8 +687,8 @@
   },
   {
     "name": "Pleiades Series: Barbiefoot, Hedra Rowan / Alex Maerbach",
-    "startDate": "2024-11-18T20:00:00-06:00",
-    "endDate": "2024-11-18T22:30:00-06:00",
+    "startDate": "2024-11-18T20:00:00-0600",
+    "endDate": "2024-11-18T22:30:00-0600",
     "organizer": {
       "name": "Elastic Arts"
     },
@@ -865,8 +865,8 @@
   },
   {
     "name": "Happy Hour Pasta Class",
-    "startDate": "2024-11-20T18:00:00-06:00",
-    "endDate": "2024-11-20T20:30:00-06:00",
+    "startDate": "2024-11-20T18:00:00-0600",
+    "endDate": "2024-11-20T20:30:00-0600",
     "organizer": {
       "name": "Tutore"
     },
@@ -917,8 +917,8 @@
   },
   {
     "name": "Charcuterie Board + Tiramisu + Wine",
-    "startDate": "2024-11-21T18:00:00-06:00",
-    "endDate": "2024-11-21T20:00:00-06:00",
+    "startDate": "2024-11-21T18:00:00-0600",
+    "endDate": "2024-11-21T20:00:00-0600",
     "organizer": {
       "name": "Tutore"
     },
@@ -941,8 +941,8 @@
   },
   {
     "name": "A Yarn + Tea Tasting",
-    "startDate": "2024-11-21T18:30:00-06:00",
-    "endDate": "2024-11-21T20:30:00-06:00",
+    "startDate": "2024-11-21T18:30:00-0600",
+    "endDate": "2024-11-21T20:30:00-0600",
     "organizer": {
       "name": "Firefly Fiber Arts Studio"
     },
@@ -966,8 +966,8 @@
   },
   {
     "name": "Improvised Music Series: Jean-Luc Capozzo/Mabel Kwan/Mark Feldman/Joshua Abrams/Michael Zerang",
-    "startDate": "2024-11-21T20:30:00-06:00",
-    "endDate": "2024-11-21T23:00:00-06:00",
+    "startDate": "2024-11-21T20:30:00-0600",
+    "endDate": "2024-11-21T23:00:00-0600",
     "organizer": {
       "name": "Elastic Arts"
     },
@@ -1018,8 +1018,8 @@
   },
   {
     "name": "Pizza Making Class",
-    "startDate": "2024-11-22T18:30:00-06:00",
-    "endDate": "2024-11-22T21:00:00-06:00",
+    "startDate": "2024-11-22T18:30:00-0600",
+    "endDate": "2024-11-22T21:00:00-0600",
     "organizer": {
       "name": "Tutore"
     },
@@ -1045,8 +1045,8 @@
   },
   {
     "name": "Elastro: 'Contact' Featuring Ále Campos, Ruby Que and ASTROMETRICS",
-    "startDate": "2024-11-22T20:00:00-06:00",
-    "endDate": "2024-11-22T23:00:00-06:00",
+    "startDate": "2024-11-22T20:00:00-0600",
+    "endDate": "2024-11-22T23:00:00-0600",
     "organizer": {
       "name": "Elastic Arts"
     },
@@ -1105,8 +1105,8 @@
   },
   {
     "name": "A Sardinian Dinner",
-    "startDate": "2024-11-23T18:00:00-06:00",
-    "endDate": "2024-11-23T20:30:00-06:00",
+    "startDate": "2024-11-23T18:00:00-0600",
+    "endDate": "2024-11-23T20:30:00-0600",
     "organizer": {
       "name": "Tutore Cooking School"
     },
