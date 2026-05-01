@@ -21,18 +21,18 @@ const GENRE_PRESENTATION: Record<
   CanonicalGenre,
   { emoji: string; className: string }
 > = {
-  Music: { emoji: "🎵", className: "bg-violet-100 text-violet-900 border-violet-200" },
-  Dance: { emoji: "💃", className: "bg-fuchsia-100 text-fuchsia-900 border-fuchsia-200" },
-  Theater: { emoji: "🎭", className: "bg-rose-100 text-rose-900 border-rose-200" },
-  Comedy: { emoji: "😂", className: "bg-amber-100 text-amber-900 border-amber-200" },
-  "Creative Arts": { emoji: "🎨", className: "bg-sky-100 text-sky-900 border-sky-200" },
-  Tech: { emoji: "💻", className: "bg-slate-200 text-slate-900 border-slate-300" },
-  Environment: { emoji: "🌿", className: "bg-emerald-100 text-emerald-900 border-emerald-200" },
-  Games: { emoji: "🎲", className: "bg-indigo-100 text-indigo-900 border-indigo-200" },
-  Community: { emoji: "🤝", className: "bg-teal-100 text-teal-900 border-teal-200" },
-  Social: { emoji: "🥂", className: "bg-pink-100 text-pink-900 border-pink-200" },
-  "Food & Drink": { emoji: "🍽️", className: "bg-orange-100 text-orange-900 border-orange-200" },
-  Literary: { emoji: "📚", className: "bg-stone-100 text-stone-900 border-stone-200" },
+  Music: { emoji: "🎵", className: "bg-violet-100 text-violet-900 border-violet-200 dark:bg-violet-950/50 dark:text-violet-300 dark:border-violet-800" },
+  Dance: { emoji: "💃", className: "bg-fuchsia-100 text-fuchsia-900 border-fuchsia-200 dark:bg-fuchsia-950/50 dark:text-fuchsia-300 dark:border-fuchsia-800" },
+  Theater: { emoji: "🎭", className: "bg-rose-100 text-rose-900 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800" },
+  Comedy: { emoji: "😂", className: "bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800" },
+  "Creative Arts": { emoji: "🎨", className: "bg-sky-100 text-sky-900 border-sky-200 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-800" },
+  Tech: { emoji: "💻", className: "bg-slate-200 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600" },
+  Environment: { emoji: "🌿", className: "bg-emerald-100 text-emerald-900 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800" },
+  Games: { emoji: "🎲", className: "bg-indigo-100 text-indigo-900 border-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:border-indigo-800" },
+  Community: { emoji: "🤝", className: "bg-teal-100 text-teal-900 border-teal-200 dark:bg-teal-950/50 dark:text-teal-300 dark:border-teal-800" },
+  Social: { emoji: "🥂", className: "bg-pink-100 text-pink-900 border-pink-200 dark:bg-pink-950/50 dark:text-pink-300 dark:border-pink-800" },
+  "Food & Drink": { emoji: "🍽️", className: "bg-orange-100 text-orange-900 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800" },
+  Literary: { emoji: "📚", className: "bg-stone-100 text-stone-900 border-stone-200 dark:bg-stone-800/50 dark:text-stone-300 dark:border-stone-600" },
 };
 
 export function getGenrePresentation(genre: CanonicalGenre) {

@@ -45,12 +45,11 @@ export default function Recommendations() {
     }
   };
 
-  // Don't render anything if not logged in or no recommendations
   if (!session) return null;
   if (loading) {
     return (
-      <div className="w-full mb-10">
-        <div className="flex items-center justify-center py-8 text-sm text-gray-400 dark:text-gray-500">
+      <div className="w-full max-w-5xl mb-6">
+        <div className="flex items-center justify-center py-6 text-sm text-slate-400 dark:text-slate-500">
           <LoadingSpinner />
           <span className="ml-2">Finding events for you…</span>
         </div>
@@ -59,123 +58,97 @@ export default function Recommendations() {
   }
   if (recurringEvents.length === 0 && suggestedEvents.length === 0) return null;
 
+  const hasRecurring = recurringEvents.length > 0;
+  const hasSuggested = suggestedEvents.length > 0;
+  const hasBoth = hasRecurring && hasSuggested;
+
   return (
-    <div className="w-full mb-10">
-      {recurringEvents.length > 0 && (
-        <RecommendationSection
-          title="Happening Again"
-          subtitle="Future dates for events you liked"
-          icon={<RepeatIcon />}
-          events={recurringEvents}
-          accentColor="emerald"
-        />
+    <div className={`w-full max-w-5xl mb-6 grid gap-4 ${hasBoth ? "md:grid-cols-2" : "grid-cols-1"}`}>
+      {hasRecurring && (
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-700/60 bg-white/70 dark:bg-slate-800/40 p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="flex items-center justify-center w-6 h-6 rounded-md bg-emerald-100 dark:bg-emerald-900/40">
+              <RepeatIcon className="text-emerald-600 dark:text-emerald-400" />
+            </span>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Happening Again</h3>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 ml-8">Future dates for events you liked</p>
+          <div className="flex flex-col gap-2 overflow-y-auto max-h-60 scrollbar-thin">
+            {recurringEvents.map((event, i) => (
+              <RecommendationCard key={`${event.name}-${event.startDate}-${i}`} event={event} accent="emerald" />
+            ))}
+          </div>
+        </div>
       )}
-      {suggestedEvents.length > 0 && (
-        <RecommendationSection
-          title="Recommended for You"
-          subtitle="Based on events you've liked"
-          icon={<SparklesIcon />}
-          events={suggestedEvents}
-          accentColor="violet"
-        />
+      {hasSuggested && (
+        <div className="rounded-xl border border-slate-200/80 dark:border-slate-700/60 bg-white/70 dark:bg-slate-800/40 p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="flex items-center justify-center w-6 h-6 rounded-md bg-violet-100 dark:bg-violet-900/40">
+              <SparklesIcon className="text-violet-600 dark:text-violet-400" />
+            </span>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Recommended for You</h3>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 ml-8">Based on events you&apos;ve liked</p>
+          <div className="flex flex-col gap-2 overflow-y-auto max-h-60 scrollbar-thin">
+            {suggestedEvents.map((event, i) => (
+              <RecommendationCard key={`${event.name}-${event.startDate}-${i}`} event={event} accent="violet" />
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-function RecommendationSection({
-  title,
-  subtitle,
-  icon,
-  events,
-  accentColor,
-}: {
-  title: string;
-  subtitle: string;
-  icon: React.ReactNode;
-  events: RecommendedEvent[];
-  accentColor: "emerald" | "violet";
-}) {
-  const borderClass =
-    accentColor === "emerald"
-      ? "border-emerald-500/30 dark:border-emerald-400/20"
-      : "border-violet-500/30 dark:border-violet-400/20";
-  const bgClass =
-    accentColor === "emerald"
-      ? "bg-emerald-50/50 dark:bg-emerald-950/20"
-      : "bg-violet-50/50 dark:bg-violet-950/20";
-  const iconColor =
-    accentColor === "emerald"
-      ? "text-emerald-600 dark:text-emerald-400"
-      : "text-violet-600 dark:text-violet-400";
-  const subtitleColor =
-    accentColor === "emerald"
-      ? "text-emerald-600/70 dark:text-emerald-400/50"
-      : "text-violet-600/70 dark:text-violet-400/50";
-
-  return (
-    <div
-      className={`rounded-xl border ${borderClass} ${bgClass} p-5 mb-6 transition-all duration-300`}
-    >
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-1">
-        <span className={iconColor}>{icon}</span>
-        <h3 className="text-lg font-semibold">{title}</h3>
-      </div>
-      <p className={`text-xs ${subtitleColor} mb-4`}>{subtitle}</p>
-
-      {/* Event cards - horizontal scroll */}
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory scrollbar-thin">
-        {events.map((event, i) => (
-          <RecommendationCard key={`${event.name}-${event.startDate}-${i}`} event={event} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function RecommendationCard({ event }: { event: RecommendedEvent }) {
+function RecommendationCard({ event, accent }: { event: RecommendedEvent; accent: "emerald" | "violet" }) {
   const timeDisplay = formatTimeRange(event);
   const dayDisplay = formatDay(event);
   const locationLabel = event.venue || event.organizer?.name || "";
 
+  const accentDot = accent === "emerald"
+    ? "bg-emerald-400 dark:bg-emerald-500"
+    : "bg-violet-400 dark:bg-violet-500";
+
   return (
-    <div className="flex-shrink-0 w-56 snap-start rounded-lg bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/50 p-4 shadow-sm hover:shadow-md transition-all duration-200 dark:hover:bg-gray-700/80 dark:hover:border-gray-600/50">
-      {/* Date chip */}
-      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-        {dayDisplay}
+    <div className="group flex items-start gap-3 rounded-lg border border-slate-100 dark:border-slate-700/40 bg-slate-50/80 dark:bg-slate-800/60 px-3 py-2.5 transition hover:border-slate-200 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-700/50">
+      {/* Accent dot */}
+      <span className={`mt-1.5 h-2 w-2 flex-shrink-0 rounded-full ${accentDot}`} />
+
+      <div className="min-w-0 flex-1">
+        {/* Name */}
+        {event.url ? (
+          <Link
+            href={event.url}
+            className="text-sm font-medium leading-snug text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-400 hover:underline line-clamp-2 block"
+          >
+            {event.name}
+          </Link>
+        ) : (
+          <p className="text-sm font-medium leading-snug text-slate-900 dark:text-slate-100 line-clamp-2">
+            {event.name}
+          </p>
+        )}
+
+        {/* Meta row */}
+        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+          <span>{dayDisplay}</span>
+          <span className="text-slate-300 dark:text-slate-600">·</span>
+          <span>{timeDisplay}</span>
+          {locationLabel && (
+            <>
+              <span className="text-slate-300 dark:text-slate-600">·</span>
+              <span className="truncate">{locationLabel}</span>
+            </>
+          )}
+        </div>
       </div>
-
-      {/* Event name */}
-      {event.url ? (
-        <Link
-          href={event.url}
-          className="text-sm font-semibold leading-tight hover:underline line-clamp-2 block mb-1"
-        >
-          {event.name}
-        </Link>
-      ) : (
-        <p className="text-sm font-semibold leading-tight line-clamp-2 mb-1">
-          {event.name}
-        </p>
-      )}
-
-      {/* Time */}
-      <p className="text-xs text-gray-500 dark:text-gray-400">{timeDisplay}</p>
-
-      {/* Organizer / Location */}
-      {locationLabel && (
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate">
-          {locationLabel}
-        </p>
-      )}
     </div>
   );
 }
 
 /* ── Icons ── */
 
-function RepeatIcon() {
+function RepeatIcon({ className }: { className?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -185,7 +158,7 @@ function RepeatIcon() {
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="size-5"
+      className={`size-3.5 ${className || ""}`}
     >
       <path d="m17 2 4 4-4 4" />
       <path d="M3 11v-1a4 4 0 0 1 4-4h14" />
@@ -195,7 +168,7 @@ function RepeatIcon() {
   );
 }
 
-function SparklesIcon() {
+function SparklesIcon({ className }: { className?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -205,7 +178,7 @@ function SparklesIcon() {
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="size-5"
+      className={`size-3.5 ${className || ""}`}
     >
       <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
       <path d="M20 3v4" />

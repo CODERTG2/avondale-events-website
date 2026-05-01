@@ -195,7 +195,7 @@ export default function EventList({ events }: { events: Event[] }) {
 
   return (
     <div className="w-full max-w-5xl">
-      <p className="mb-3 text-xs text-slate-600">
+      <p className="mb-3 text-xs text-slate-600 dark:text-slate-400">
         Browse neighborhood events with quick venue map previews.
       </p>
 
@@ -230,9 +230,9 @@ export default function EventList({ events }: { events: Event[] }) {
             />
           ))
         ) : (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-5 text-center shadow-sm">
-            <p className="text-sm font-medium text-slate-900">No events match your filters yet.</p>
-            <p className="mt-1 text-xs text-slate-600">
+          <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 p-5 text-center shadow-sm">
+            <p className="text-sm font-medium text-slate-900 dark:text-slate-100">No events match your filters yet.</p>
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
               Try clearing search, widening the date range, or selecting different tags.
             </p>
           </div>
@@ -287,7 +287,7 @@ function FilterToolbar({
         className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
           active
             ? "border-indigo-600 bg-indigo-600 text-white"
-            : "border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 hover:text-indigo-700"
+            : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-400"
         }`}
         aria-pressed={active}
       >
@@ -297,9 +297,9 @@ function FilterToolbar({
   };
 
   return (
-    <section className="mb-5 space-y-4 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <section className="mb-5 space-y-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 p-3 shadow-sm">
       <div>
-        <label htmlFor="event-search" className="text-xs font-medium text-slate-600">
+        <label htmlFor="event-search" className="text-xs font-medium text-slate-600 dark:text-slate-400">
           Search
         </label>
         <input
@@ -308,12 +308,12 @@ function FilterToolbar({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search by event or organizer…"
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
+          className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 shadow-sm outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400"
         />
       </div>
 
       <div>
-        <p className="text-xs font-medium text-slate-600">When</p>
+        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">When</p>
         <div className="mt-1 flex flex-wrap gap-2">
           {presetBtn("all", "All dates")}
           {presetBtn("today", "Today")}
@@ -323,22 +323,22 @@ function FilterToolbar({
         </div>
         {datePreset === "custom" && (
           <div className="mt-2 flex flex-wrap items-end gap-2">
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-slate-600 dark:text-slate-400">
               From
               <input
                 type="date"
                 value={customStart}
                 onChange={(e) => onCustomStart(e.target.value)}
-                className="mt-0.5 block rounded-lg border border-slate-200 px-2 py-1 text-sm"
+                className="mt-0.5 block rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-sm text-slate-900 dark:text-slate-100"
               />
             </label>
-            <label className="text-xs text-slate-600">
+            <label className="text-xs text-slate-600 dark:text-slate-400">
               To
               <input
                 type="date"
                 value={customEnd}
                 onChange={(e) => onCustomEnd(e.target.value)}
-                className="mt-0.5 block rounded-lg border border-slate-200 px-2 py-1 text-sm"
+                className="mt-0.5 block rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-sm text-slate-900 dark:text-slate-100"
               />
             </label>
           </div>
@@ -347,11 +347,11 @@ function FilterToolbar({
 
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <p className="w-full text-xs font-medium text-slate-600 sm:w-auto">Tags (any match)</p>
+          <p className="w-full text-xs font-medium text-slate-600 dark:text-slate-400 sm:w-auto">Tags (any match)</p>
           <button
             type="button"
             onClick={onClearGenres}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 hover:border-indigo-300 hover:text-indigo-700"
+            className="rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-400"
           >
             Clear tags
           </button>
@@ -385,7 +385,7 @@ function FilterToolbar({
           className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
             nearMeEnabled
               ? "border-emerald-600 bg-emerald-600 text-white"
-              : "border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 hover:text-indigo-700"
+              : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-400"
           }`}
         >
           📍 Near me
@@ -393,7 +393,7 @@ function FilterToolbar({
         {geoHint && <p className="text-xs text-amber-800">{geoHint}</p>}
       </div>
 
-      <p className="text-xs text-slate-600">
+      <p className="text-xs text-slate-600 dark:text-slate-400">
         Showing {visibleCount} of {totalCount} upcoming events.
         {nearMeEnabled && (
           <span className="ml-1">
@@ -413,7 +413,7 @@ function EventListDay({ daySchedule, likedEventIds, likeCounts, onLikeUpdate }: 
 }) {
   return (
     <section>
-      <h2 className="mb-3 inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-3 py-0.5 text-sm font-semibold text-indigo-800">
+      <h2 className="mb-3 inline-flex rounded-full border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-0.5 text-sm font-semibold text-indigo-800 dark:text-indigo-300">
         {daySchedule.dayDisplay}
       </h2>
       <div className="pb-3">
@@ -423,7 +423,7 @@ function EventListDay({ daySchedule, likedEventIds, likeCounts, onLikeUpdate }: 
             return (
               <li
                 key={eventId}
-                className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                className="min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 p-3 shadow-sm"
               >
                 <EventDisplay
                   event={event}
@@ -494,25 +494,25 @@ function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
 
   return (
     <div className="grid gap-2.5 md:grid-cols-[140px_1fr]">
-      <div className="rounded-lg bg-slate-50 p-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Time</p>
-        <p className="mt-0.5 text-sm font-semibold text-slate-900">{timeDisplay}</p>
+      <div className="rounded-lg bg-slate-50 dark:bg-slate-700/50 p-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Time</p>
+        <p className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-100">{timeDisplay}</p>
       </div>
       <div className="min-w-0 max-w-full">
         {event.url ? (
           <Link
             href={event.url}
-            className="inline-flex items-center text-base font-semibold text-slate-900 hover:text-indigo-700 hover:underline"
+            className="inline-flex items-center text-base font-semibold text-slate-900 dark:text-slate-100 hover:text-indigo-700 dark:hover:text-indigo-400 hover:underline"
           >
             <span className="break-words">{event.name}</span>
-            <span className="ml-2 flex items-center text-slate-500">
+            <span className="ml-2 flex items-center text-slate-500 dark:text-slate-400">
               <LinkIcon />
             </span>
           </Link>
         ) : (
-          <p className="break-words text-lg font-semibold text-slate-900">{event.name}</p>
+          <p className="break-words text-lg font-semibold text-slate-900 dark:text-slate-100">{event.name}</p>
         )}
-        <div className="mt-1 text-xs text-slate-600">
+        <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
           {event.organizer?.name && (
             <p className="max-w-full break-words">{event.organizer.name}</p>
           )}
@@ -545,7 +545,7 @@ function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
         </div>
 
         {mapEmbedUrl && (
-          <div className="mt-2 overflow-hidden rounded-lg border border-slate-200">
+          <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
             <iframe
               title={`Map for ${event.name}`}
               src={mapEmbedUrl}
@@ -554,12 +554,12 @@ function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
               referrerPolicy="no-referrer-when-downgrade"
             />
             {mapOpenUrl && (
-              <div className="flex justify-end bg-slate-50 px-2 py-1.5">
+              <div className="flex justify-end bg-slate-50 dark:bg-slate-800 px-2 py-1.5">
                 <Link
                   href={mapOpenUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center text-xs font-medium text-indigo-700 hover:underline"
+                  className="inline-flex items-center text-xs font-medium text-indigo-700 dark:text-indigo-400 hover:underline"
                 >
                   <MapPinIcon />
                   <span className="ml-1">Open on Google Maps</span>
@@ -569,7 +569,7 @@ function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
           </div>
         )}
         {!mapEmbedUrl && (
-          <p className="mt-2 rounded-lg bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
+          <p className="mt-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-400">
             No venue details available for map preview.
           </p>
         )}
