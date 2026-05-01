@@ -30,10 +30,15 @@ export default async function Home() {
         events = JSON.parse(JSON.stringify(docs));
         await client.close();
       } else {
-        console.error("MONGODB_URI is not defined.");
+        const fs = require('fs');
+        const path = require('path');
+        const dataPath = path.join(process.cwd(), '../events.json');
+        console.log("Using local events.json for testing");
+        const fileData = fs.readFileSync(dataPath, 'utf-8');
+        events = JSON.parse(fileData);
       }
     } catch (error) {
-      console.error("Failed to fetch events from MongoDB:", error);
+      console.error("Failed to fetch events from MongoDB/JSON:", error);
     }
   }
 

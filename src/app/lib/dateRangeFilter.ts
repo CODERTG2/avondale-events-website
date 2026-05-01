@@ -30,25 +30,27 @@ function getSundayOfWeek(ref: Date): Date {
   return endOfDay(sun);
 }
 
-/** Next Fri 00:00 through following Sun 23:59:59 (local), inclusive of today if weekend. */
+/** Next Sat 00:00 through following Sun 23:59:59 (local), inclusive of today if weekend. */
 function getNextWeekendRange(ref: Date): { start: Date; end: Date } {
   const d = startOfDay(ref);
-  const day = d.getDay(); // Fri=5 Sat=6 Sun=0
-  let daysUntilFriday = (5 - day + 7) % 7;
-  if (day === 5 || day === 6 || day === 0) {
-    const fri = new Date(d);
-    if (day === 6) fri.setDate(d.getDate() - 1);
-    if (day === 0) fri.setDate(d.getDate() - 2);
-    if (day === 5) fri.setTime(d.getTime());
-    const sun = new Date(fri);
-    sun.setDate(fri.getDate() + 2);
-    return { start: startOfDay(fri), end: endOfDay(sun) };
+  const day = d.getDay(); // 0 is Sunday, 6 is Saturday
+
+  // If today is Sunday (0), the weekend started yesterday (Saturday)
+  if (day === 0) {
+    const sat = new Date(d);
+    sat.setDate(d.getDate() - 1);
+    return { start: startOfDay(sat), end: endOfDay(d) };
   }
-  const fri = new Date(d);
-  fri.setDate(d.getDate() + daysUntilFriday);
-  const sun = new Date(fri);
-  sun.setDate(fri.getDate() + 2);
-  return { start: startOfDay(fri), end: endOfDay(sun) };
+
+  // Find the upcoming Saturday
+  const daysUntilSaturday = (6 - day + 7) % 7;
+  const sat = new Date(d);
+  sat.setDate(d.getDate() + daysUntilSaturday);
+
+  const sun = new Date(sat);
+  sun.setDate(sat.getDate() + 1);
+
+  return { start: startOfDay(sat), end: endOfDay(sun) };
 }
 
 export function getEventStartAsDate(event: Event): Date {
