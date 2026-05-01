@@ -16,10 +16,20 @@ export default function Sidebar({
             className={`fixed inset-0 z-50 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm" onClick={toggle} />
+            <button
+                type="button"
+                className="absolute inset-0 w-full h-full bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm border-none cursor-default"
+                onClick={toggle}
+                aria-label="Close menu"
+            />
 
             {/* Panel */}
-            <div className={`absolute right-0 top-0 h-full w-full max-w-xs bg-white dark:bg-slate-900 px-6 py-6 shadow-2xl transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
+            <div
+                className={`absolute right-0 top-0 h-full w-full max-w-xs bg-white dark:bg-slate-900 px-6 py-6 shadow-2xl transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Navigation menu"
+            >
                 <button
                     className="ml-auto flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400 hover:border-indigo-300 hover:text-indigo-700 transition"
                     onClick={toggle}

@@ -9,11 +9,11 @@ export type DaySchedule = {
 
 /** Expects `events` to already be ordered (e.g. by time or distance). */
 export function generateEventSchedule(events: Event[]): DaySchedule[] {
-  const sortedEvents = [...events];
+  const orderedEvents = [...events];
 
   let eventSchedule: DaySchedule[] = [];
-  let currentDay: any;
-  sortedEvents.forEach(event => {
+  let currentDay: DaySchedule | undefined;
+  orderedEvents.forEach(event => {
     const eventDay = formatDay(event);
     // Print the day only once per group of events
     if (eventDay !== currentDay?.dayDisplay) {
@@ -35,7 +35,7 @@ export function generateEventSchedule(events: Event[]): DaySchedule[] {
   if (currentDay)
     eventSchedule.push(currentDay);
   return eventSchedule;
-};
+}
 
 
 export function removePastEvents(events: Event[]): Event[] {

@@ -148,23 +148,37 @@ export default function EventList({ events }: { events: Event[] }) {
 
   useEffect(() => {
     if (!nearMeEnabled || !userPos || labelsToGeocode.length === 0) return;
-    let cancelled = false;
+    const controller = new AbortController();
+    const signal = controller.signal;
 
     const run = async () => {
       for (const label of labelsToGeocode) {
-        if (cancelled) break;
+        if (signal.aborted) break;
         if (geoRequestedRef.current.has(label)) continue;
         geoRequestedRef.current.add(label);
-        await new Promise((r) => setTimeout(r, 1100));
-        if (cancelled) break;
+        
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(resolve, 1100);
+            signal.addEventListener('abort', () => {
+              clearTimeout(timeout);
+              reject(new Error('aborted'));
+            }, { once: true });
+          });
+        } catch {
+          break; // Aborted during delay
+        }
+
+        if (signal.aborted) break;
         const query = `${label}, Avondale, Chicago, IL, USA`;
         try {
-          const coords = await geocodeWithNominatim(query);
-          if (!cancelled) {
+          const coords = await geocodeWithNominatim(query, signal);
+          if (!signal.aborted) {
             setCoordByLabel((prev) => ({ ...prev, [label]: coords }));
           }
-        } catch {
-          if (!cancelled) {
+        } catch (err: any) {
+          if (err.name === 'AbortError') break;
+          if (!signal.aborted) {
             setCoordByLabel((prev) => ({ ...prev, [label]: null }));
           }
         }
@@ -173,7 +187,7 @@ export default function EventList({ events }: { events: Event[] }) {
 
     void run();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [nearMeEnabled, userPos, labelsToGeocode]);
 
@@ -499,6 +513,7 @@ function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
 }) {
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   const handleLike = async () => {
     if (!session) {
@@ -593,7 +608,16 @@ function EventDisplay({ event, eventId, isLiked, likeCount, onLikeUpdate }: {
           </button>
         </div>
 
-        {mapEmbedUrl && (
+        {mapEmbedUrl && !showMap && (
+          <button
+            onClick={() => setShowMap(true)}
+            className="mt-2 flex w-full items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          >
+            <MapPinIcon />
+            <span className="ml-1">Show Map Preview</span>
+          </button>
+        )}
+        {mapEmbedUrl && showMap && (
           <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
             <iframe
               title={`Map for ${event.name}`}

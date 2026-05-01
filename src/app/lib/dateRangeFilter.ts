@@ -83,7 +83,12 @@ export function getDatePresetRange(
 
   if (preset === "custom") {
     if (!customStart || !customEnd) return null;
-    return { start: startOfDay(new Date(customStart)), end: endOfDay(new Date(customEnd)) };
+    const [sY, sM, sD] = customStart.split("-").map(Number);
+    const [eY, eM, eD] = customEnd.split("-").map(Number);
+    return { 
+      start: startOfDay(new Date(sY, sM - 1, sD)), 
+      end: endOfDay(new Date(eY, eM - 1, eD)) 
+    };
   }
 
   return null;

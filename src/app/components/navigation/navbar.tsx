@@ -33,6 +33,6 @@ function MenuIcon() {
 
 function Logo() {
   return (
-    <img src="../icon.png" alt="Avondale Events logo" width={42} height={42} className="rounded-lg" />
+    <img src="/icon.png" alt="Avondale Events logo" width={42} height={42} className="rounded-lg" />
   );
 }
